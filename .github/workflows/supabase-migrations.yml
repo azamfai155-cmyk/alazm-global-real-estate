@@ -38,10 +38,14 @@ jobs:
       - name: Baseline existing initial schema (first run only)
         if: inputs.baseline_existing_schema
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase migration repair 202611190001 --status applied --linked
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          test -n "$SUPABASE_DB_URL" || (echo "Missing SUPABASE_DB_URL secret" && exit 1)
+          supabase migration repair 202611190001 --status applied --db-url="$SUPABASE_DB_URL"
 
-      - name: Apply pending migrations using linked Supabase project
+      - name: Apply pending migrations via IPv4 session pooler
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: supabase db push --linked --yes
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          test -n "$SUPABASE_DB_URL" || (echo "Missing SUPABASE_DB_URL secret" && exit 1)
+          supabase db push --db-url="$SUPABASE_DB_URL" --yes
