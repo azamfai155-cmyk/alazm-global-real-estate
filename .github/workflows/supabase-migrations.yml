@@ -39,8 +39,7 @@ jobs:
         if: inputs.baseline_existing_schema
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-        run: supabase migration repair 202611190001 --status applied --db-url="$SUPABASE_DB_URL"
+        run: supabase migration repair 202611190001 --status applied --linked
 
       - name: Apply pending migrations via IPv4 session pooler
         env:
