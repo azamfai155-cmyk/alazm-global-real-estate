@@ -39,3 +39,22 @@
 7. اختبار أمني ووظيفي قبل فتح النظام للعامة.
 
 لا تضف إعلاناً إلا بعد الحصول على إذن المالك أو ممثله المخوّل والتحقق من المعلومات. لا تضع مفاتيح API أو كلمات مرور في هذا المستودع العام.
+
+
+## Supabase database setup (next activation step)
+
+A first schema migration is included at:
+`supabase/migrations/202611190001_initial_schema.sql`
+
+It defines profiles and staff roles, property sources, property listings, media rights metadata, customer leads, audit logs, and row-level security policies.
+
+To activate it:
+1. Create a Supabase project at https://supabase.com/dashboard (choose a region suitable for your audience and review the free-tier limits).
+2. Open SQL Editor and run the migration file.
+3. Create the first user through Supabase Auth.
+4. Verify that user's UUID in Authentication > Users, then promote that exact account to owner from the SQL Editor:
+   `update public.profiles set role = 'owner', active = true where id = '<verified-auth-user-uuid>';`
+5. Store the Supabase project URL and anon key only in the frontend environment configuration; never expose the service_role key in browser code or GitHub.
+6. Connect the application to Supabase Auth and database APIs, then test RLS with separate owner, reviewer, agent, and anonymous sessions.
+
+Important: The migration has been committed but has NOT been executed against a live Supabase project. No Supabase project credentials were available in this repository workflow. Until the migration is applied and RLS tests pass, the cloud database and authentication remain inactive.
