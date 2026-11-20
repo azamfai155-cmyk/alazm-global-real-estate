@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#10251f"><title>دخول الإدارة | العزم العالمية للعقارات</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f5f2;color:#172a22;font:15px/1.8 Tahoma,Arial,sans-serif;padding:18px}.card{width:min(440px,100%);background:white;border:1px solid #e1e7e1;border-radius:18px;padding:28px;box-shadow:0 18px 55px #10251f12}h1{font-size:23px;margin:0 0 5px;color:#12372c}p{color:#66756d;font-size:13px}label{display:block;font-weight:bold;margin:14px 0 5px}input{width:100%;padding:12px;border:1px solid #d7e0d8;border-radius:8px;font:inherit}button{width:100%;margin-top:18px;padding:12px;border:0;border-radius:9px;background:#c9a66b;color:#17251e;font-weight:bold;font:inherit;cursor:pointer}#msg{min-height:28px;color:#9b3b2f}.back{display:block;text-align:center;margin-top:16px;color:#12372c}
+</style></head><body><main class="card"><h1>مركز إدارة العزم</h1><p>تسجيل دخول آمن عبر Supabase. الحسابات الجديدة لا تحصل على صلاحية الإدارة تلقائياً.</p>
+<form id="login"><label for="email">البريد الإلكتروني</label><input id="email" type="email" autocomplete="username" required><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" required minlength="8"><button id="submit" type="submit">تسجيل الدخول</button><p id="msg" role="status"></p></form><a class="back" href="index.html">العودة إلى الموقع</a></main>
+<script src="supabase-config.js"></script><script type="module">
+import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+const c=createClient(window.AL_AZM_SUPABASE.url,window.AL_AZM_SUPABASE.publishableKey);
+const form=document.getElementById("login"),msg=document.getElementById("msg"),btn=document.getElementById("submit");
+if(new URLSearchParams(location.search).has("reason"))msg.textContent="هذا الحساب لا يملك صلاحية دخول الإدارة.";
+form.addEventListener("submit",async e=>{
+ e.preventDefault();btn.disabled=true;msg.textContent="جارٍ التحقق...";
+ const {data,error}=await c.auth.signInWithPassword({email:document.getElementById("email").value.trim(),password:document.getElementById("password").value});
+ if(error){msg.textContent="تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور.";btn.disabled=false;return}
+ const {data:p,error:pe}=await c.from("profiles").select("role,active").eq("id",data.user.id).single();
+ if(pe||!p||!p.active||!["owner","admin"].includes(p.role)){await c.auth.signOut();msg.textContent="تم التحقق من الحساب، لكن ليس لديه صلاحية إدارة الشركة.";btn.disabled=false;return}
+ location.replace("admin.html");
+});
+</script></body></html>
