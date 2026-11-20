@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مركز عمليات العزم السحابي</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f2;color:#172a22;font:14px/1.7 Tahoma,Arial,sans-serif}.top{background:#10251f;color:#fff;padding:16px 22px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.top small{color:#d9bd8d}.wrap{max-width:1200px;margin:auto;padding:22px}.notice{background:#fff7e8;border:1px solid #ead6aa;padding:12px;border-radius:9px;margin-bottom:16px}.tabs,.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.btn{border:0;border-radius:8px;padding:9px 14px;background:#12372c;color:white;cursor:pointer}.btn.gold{background:#c9a66b;color:#172a22}.btn.light{background:#e6ece7;color:#172a22}.panel{background:#fff;border:1px solid #e1e7e1;border-radius:12px;padding:16px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:grid;gap:4px}.field.full{grid-column:1/-1}input,select,textarea{width:100%;padding:10px;border:1px solid #d7e0d8;border-radius:8px;font:inherit}textarea{min-height:75px}table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:right;padding:10px;border-bottom:1px solid #e1e7e1}th{color:#66756d}.scroll{overflow:auto}.hidden{display:none!important}.muted{color:#66756d}.status{padding:10px;background:#edf4ef;border-radius:8px;margin:10px 0}.danger{background:#f8e9e7;color:#923b32}@media(max-width:600px){.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.wrap{padding:12px}}
+</style></head>
+<body>
+<header class="top"><div><b>مركز عمليات العزم</b><br><small>AL AZM GLOBAL REAL ESTATE · CLOUD</small></div><div><span id="who">جارٍ التحقق...</span> <button class="btn light" id="logout">خروج</button></div></header>
+<main class="wrap">
+<div class="notice"><b>قاعدة البيانات السحابية:</b> السجلات هنا تُقرأ وتُحفظ في Supabase وفق صلاحيات حسابك. لا يوجد نشر خارجي تلقائي؛ كل عقار يبدأ قيد المراجعة.</div>
+<div id="msg" class="status">جارٍ الاتصال بقاعدة البيانات...</div>
+<div class="tabs"><button class="btn" data-tab="properties">العقارات</button><button class="btn light" data-tab="leads">طلبات العملاء</button><button class="btn light" data-tab="sources">المصادر</button></div>
+<section id="properties" class="panel">
+<h2>إضافة عقار</h2>
+<form id="propertyForm" class="grid">
+<div class="field"><label>العنوان *</label><input name="title" required maxlength="160"></div>
+<div class="field"><label>الدولة *</label><input name="country" required></div>
+<div class="field"><label>المدينة *</label><input name="city" required></div>
+<div class="field"><label>نوع العقار *</label><input name="property_type" required placeholder="شقة، فيلا، أرض..."></div>
+<div class="field"><label>نوع العرض *</label><select name="listing_kind"><option value="sale">بيع</option><option value="rent">إيجار</option><option value="lease">تأجير تجاري</option></select></div>
+<div class="field"><label>السعر</label><input name="price" type="number" min="0" step="0.01"></div>
+<div class="field"><label>العملة (3 أحرف)</label><input name="currency" maxlength="3" placeholder="USD"></div>
+<div class="field"><label>المصدر المسجل *</label><select name="source_id" id="propertySource" required><option value="">أضف مصدراً أولاً</option></select></div>
+<div class="field"><label>رابط الإعلان الأصلي</label><input name="source_listing_url" type="url"></div>
+<div class="field"><label>مرجع إذن إعادة النشر *</label><input name="permission_reference" required></div>
+<div class="field"><label class="muted"><input type="checkbox" name="permission_confirmed" style="width:auto"> تم التحقق من الإذن الصريح</label></div>
+<div class="field"><label class="muted"><input type="checkbox" name="suspicious" style="width:auto"> توجد علامة اشتباه</label></div>
+<div class="field full"><label>الوصف</label><textarea name="description"></textarea></div>
+<div class="field full"><button class="btn gold">حفظ العقار في قاعدة البيانات</button></div>
+</form>
+<h2>سجل العقارات</h2><div class="scroll"><table><thead><tr><th>العقار</th><th>الموقع</th><th>المصدر</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody id="propertyRows"></tbody></table></div>
+</section>
+<section id="leads" class="panel hidden">
+<h2>إضافة طلب عميل</h2><form id="leadForm" class="grid">
+<div class="field"><label>اسم العميل *</label><input name="full_name" required></div>
+<div class="field"><label>رقم الهاتف</label><input name="phone"></div>
+<div class="field"><label>البريد</label><input name="email" type="email"></div>
+<div class="field"><label>نوع الطلب *</label><select name="kind"><option value="buy">شراء</option><option value="sell">بيع</option><option value="rent">استئجار</option><option value="lease">تأجير</option><option value="partnership">شراكة</option><option value="inquiry">استفسار</option></select></div>
+<div class="field"><label>الدولة</label><input name="country"></div><div class="field"><label>المدينة</label><input name="city"></div>
+<div class="field full"><label>التفاصيل</label><textarea name="details"></textarea></div>
+<div class="field full"><label><input type="checkbox" name="consent_to_contact" style="width:auto"> وافق العميل على التواصل معه</label></div>
+<div class="field full"><button class="btn gold">حفظ الطلب</button></div></form>
+<h2>سجل الطلبات</h2><div class="scroll"><table><thead><tr><th>العميل</th><th>الطلب</th><th>الموقع</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+</section>
+<section id="sources" class="panel hidden">
+<h2>تسجيل مصدر أو شريك</h2><form id="sourceForm" class="grid">
+<div class="field"><label>اسم المصدر *</label><input name="name" required></div>
+<div class="field"><label>نوع المصدر</label><select name="kind"><option value="owner">مالك مباشر</option><option value="licensed_broker">وسيط مرخص</option><option value="agency">شركة عقارية</option><option value="portal">منصة إلكترونية</option><option value="marketing_partner">شريك تسويق</option><option value="other">أخرى</option></select></div>
+<div class="field"><label>بيانات التواصل</label><input name="contact"></div><div class="field"><label>رابط الموقع</label><input name="website_url" type="url"></div>
+<div class="field"><label>نطاق الإذن</label><input name="permission_scope" placeholder="مثال: إعادة نشر النص والصور على موقع الشركة"></div>
+<div class="field"><label>مرجع الإذن</label><input name="permission_reference"></div>
+<div class="field full"><button class="btn gold">حفظ المصدر</button></div></form>
+<h2>المصادر المسجلة</h2><div class="scroll"><table><thead><tr><th>الاسم</th><th>النوع</th><th>بيانات التواصل</th><th>الحالة</th></tr></thead><tbody id="sourceRows"></tbody></table></div>
+</section>
+<p class="muted">الذكاء الاصطناعي والنشر الخارجي لا يزالان متوقفين حتى إعداد واجهات خادم موثوقة واختبارها واعتماد إجراءات الموافقة.</p>
+</main>
+<script src="supabase-config.js"></script>
+<script type="module">
+import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
+const cfg=window.AL_AZM_SUPABASE;
+const sb=createClient(cfg.url,cfg.publishableKey);
+const $=id=>document.getElementById(id);
+const msg=s=>{$("msg").textContent=s};
+const esc=s=>String(s??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let profile=null,sources=[];
+async function init(){
+ const {data:{session},error}=await sb.auth.getSession();
+ if(error||!session){location.replace("login.html");return}
+ const {data:p,error:pe}=await sb.from("profiles").select("full_name,role,active").eq("id",session.user.id).single();
+ if(pe||!p?.active||!["owner","admin"].includes(p.role)){await sb.auth.signOut();location.replace("login.html?reason=unauthorized");return}
+ profile=p;$("who").textContent=p.full_name||session.user.email;
+ $("logout").onclick=async()=>{await sb.auth.signOut();location.replace("login.html")};
+ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("main section").forEach(s=>s.classList.add("hidden"));$(b.dataset.tab).classList.remove("hidden");document.querySelectorAll("[data-tab]").forEach(x=>x.className=x===b?"btn":"btn light")});
+ await reload();
+}
+async function reload(){
+ msg("جارٍ تحميل السجلات من Supabase...");
+ const [s,p,l]=await Promise.all([sb.from("sources").select("id,name,kind,contact,active").order("created_at",{ascending:false}),sb.from("properties").select("id,title,country,city,status,source_id,created_at,sources(name)").order("created_at",{ascending:false}),sb.from("leads").select("id,full_name,kind,country,city,status,created_at").order("created_at",{ascending:false})]);
+ if(s.error||p.error||l.error){msg("تعذر تحميل البيانات: "+(s.error?.message||p.error?.message||l.error?.message));return}
+ sources=s.data||[];$("propertySource").innerHTML='<option value="">اختر المصدر</option>'+sources.filter(x=>x.active).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");
+ $("sourceRows").innerHTML=sources.map(x=>'<tr><td>'+esc(x.name)+'</td><td>'+esc(x.kind)+'</td><td>'+esc(x.contact)+'</td><td>'+ (x.active?"نشط":"موقوف")+'</td></tr>').join("");
+ $("propertyRows").innerHTML=(p.data||[]).map(x=>'<tr><td>'+esc(x.title)+'</td><td>'+esc(x.city)+', '+esc(x.country)+'</td><td>'+esc(x.sources?.name)+'</td><td>'+esc(x.status)+'</td><td>'+new Date(x.created_at).toLocaleDateString("ar")+'</td></tr>').join("");
+ $("leadRows").innerHTML=(l.data||[]).map(x=>'<tr><td>'+esc(x.full_name)+'</td><td>'+esc(x.kind)+'</td><td>'+esc([x.city,x.country].filter(Boolean).join(", "))+'</td><td>'+esc(x.status)+'</td><td>'+new Date(x.created_at).toLocaleDateString("ar")+'</td></tr>').join("");
+ msg("اتصال سحابي ناجح. المصادر: "+sources.length+" · العقارات: "+(p.data||[]).length+" · طلبات العملاء: "+(l.data||[]).length);
+}
+$("sourceForm").addEventListener("submit",async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target));const {error}=await sb.from("sources").insert({...v,created_by:(await sb.auth.getUser()).data.user.id});if(error){msg("لم يُحفظ المصدر: "+error.message);return}e.target.reset();await reload()});
+$("propertyForm").addEventListener("submit",async e=>{e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f));const user=(await sb.auth.getUser()).data.user;const payload={title:v.title,description:v.description||null,country:v.country,city:v.city,property_type:v.property_type,listing_kind:v.listing_kind,price:v.price?Number(v.price):null,currency:v.currency?.trim().toUpperCase()||null,source_id:v.source_id,source_listing_url:v.source_listing_url||null,permission_confirmed:f.elements.permission_confirmed.checked,permission_reference:v.permission_reference,permission_checked_by:f.elements.permission_confirmed.checked?user.id:null,permission_checked_at:f.elements.permission_confirmed.checked?new Date().toISOString():null,suspicious:f.elements.suspicious.checked,status:"pending_review",created_by:user.id};const {error}=await sb.from("properties").insert(payload);if(error){msg("لم يُحفظ العقار: "+error.message);return}f.reset();await reload()});
+$("leadForm").addEventListener("submit",async e=>{e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f));const user=(await sb.auth.getUser()).data.user;const {error}=await sb.from("leads").insert({full_name:v.full_name,phone:v.phone||null,email:v.email||null,kind:v.kind,country:v.country||null,city:v.city||null,details:v.details||null,consent_to_contact:f.elements.consent_to_contact.checked,created_by:user.id});if(error){msg("لم يُحفظ الطلب: "+error.message);return}f.reset();await reload()});
+init();
+</script></body></html>
