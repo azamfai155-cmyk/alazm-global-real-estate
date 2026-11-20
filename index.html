@@ -26,6 +26,17 @@ footer{background:#071812;color:#dce7e0;padding:25px 0;font-size:12px}.foot{disp
 </style>
 </head>
 <body>
+<script>
+(function(){
+  const hash=new URLSearchParams(location.hash.slice(1));
+  const query=new URLSearchParams(location.search);
+  const recovery=hash.get("type")==="recovery" || query.get("type")==="recovery" || query.has("code");
+  if(recovery && !location.pathname.endsWith("/update-password.html")){
+    location.replace("update-password.html"+location.search+location.hash);
+  }
+})();
+</script>
+
 <header><div class="wrap nav"><a class="brand" href="#home">العزم العالمية للعقارات<small>AL AZM GLOBAL REAL ESTATE</small></a><button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="navLinks">القائمة ☰</button><nav class="links" id="navLinks"><a href="#home">الرئيسية</a><a href="#services">خدماتنا</a><a href="#about">من نحن</a><a href="#process">آلية العمل</a><a href="#team">فريق العمل الرقمي</a><a href="#request">اطلب خدمة</a><a href="admin.html">مركز العمليات</a></nav><a class="nav-cta" href="https://wa.me/967711273188" target="_blank" rel="noopener noreferrer">تواصل معنا</a></div></header>
 <main>
 <section class="hero" id="home"><div class="wrap hero-grid"><div><div class="eyebrow">AL AZM GLOBAL REAL ESTATE</div><h1>ثقة تبني الفرص،<br>وعزم يصنع المستقبل.</h1><p>نساعد الأفراد والمستثمرين على الوصول إلى الفرص العقارية من خلال التسويق والتنسيق والوساطة والتأجير، بالتعاون مع الملاك والجهات المخوّلة ووفق الأنظمة المحلية.</p><div class="actions"><a class="btn gold" href="#request">أرسل طلبك العقاري</a><a class="btn outline" href="#services">اكتشف خدماتنا</a></div><div class="trustline"><span>وضوح المعلومات</span><span>احترام حقوق الأطراف</span><span>تعاون محلي</span></div></div><aside class="hero-panel"><strong>رؤية عقارية بطموح عالمي</strong><p>نبني شبكة تعاون تربط العملاء بالملاك والمسوقين والشركاء، ونعمل على تطوير خدماتنا تدريجياً بحسب التراخيص والشراكات المتاحة في كل سوق.</p></aside></div></section>
