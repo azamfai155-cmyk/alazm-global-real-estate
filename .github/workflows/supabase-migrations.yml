@@ -7,7 +7,7 @@ on:
         description: "Mark the existing initial schema migration as already applied (first run only)"
         required: true
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -35,17 +35,28 @@ jobs:
           test -n "$SUPABASE_PROJECT_ID" || (echo "Missing SUPABASE_PROJECT_ID secret" && exit 1)
           supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
+      # Build the pooler URL from the same database password already used by
+      # 'supabase link'. Python URL-encodes special characters without logging the secret.
+      - name: Build IPv4 session-pooler connection URL
+        env:
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from urllib.parse import quote
+          project = os.environ["SUPABASE_PROJECT_ID"]
+          password = quote(os.environ["SUPABASE_DB_PASSWORD"], safe="")
+          url = f"postgresql://postgres.{project}:{password}@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+              env_file.write(f"SUPABASE_DB_URL={url}\\n")
+          PY
+
       - name: Baseline existing initial schema (first run only)
         if: inputs.baseline_existing_schema
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          test -n "$SUPABASE_DB_URL" || (echo "Missing SUPABASE_DB_URL secret" && exit 1)
           supabase migration repair 202611190001 --status applied --db-url="$SUPABASE_DB_URL"
 
       - name: Apply pending migrations via IPv4 session pooler
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          test -n "$SUPABASE_DB_URL" || (echo "Missing SUPABASE_DB_URL secret" && exit 1)
           supabase db push --db-url="$SUPABASE_DB_URL" --yes
