@@ -4,7 +4,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== "POST") return json(res,405,{error:"Method not allowed"});
   const auth=req.headers.authorization||"";
   if(!auth.startsWith("Bearer ")) return json(res,401,{error:"تسجيل الدخول مطلوب."});
-  const {SUPABASE_URL,SUPABASE_ANON_KEY,GEMINI_API_KEY}=process.env;
+  const GEMINI_API_KEY=process.env.GEMINI_API_KEY;\n  const SUPABASE_URL=process.env.SUPABASE_URL || "https://latgmqklsszgictpuerp.supabase.co";\n  const SUPABASE_ANON_KEY=process.env.SUPABASE_ANON_KEY || "sb_publishable_wMBzGxUySW5xznKG_Gx_Rg_DFNqDwhP";
   if(!SUPABASE_URL||!SUPABASE_ANON_KEY) return json(res,503,{error:"إعدادات قاعدة البيانات غير مكتملة."});
   if(!GEMINI_API_KEY) return json(res,503,{error:"أضف GEMINI_API_KEY إلى متغيرات Vercel السرية أولاً."});
   const headers={apikey:SUPABASE_ANON_KEY,Authorization:auth,"Content-Type":"application/json"};
