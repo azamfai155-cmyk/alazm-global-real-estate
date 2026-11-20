@@ -38,4 +38,4 @@ function assignTo(id){openTask();document.getElementById('employeeSelect').value
 document.getElementById('taskForm').addEventListener('submit',e=>{e.preventDefault();let f=Object.fromEntries(new FormData(e.target));let s=staff.find(x=>x[0]===f.employee);tasks.unshift({title:f.title,employee:f.employee,employeeName:s[2],priority:f.priority,details:f.details,status:'جديدة'});e.target.reset();closeTask();save()});
 function setStatus(i,v){tasks[i].status=v;save()}function removeTask(i){if(confirm('حذف المهمة؟')){tasks.splice(i,1);save()}}
 render();
-</script></body></html>
+</script><script src="supabase-config.js"></script><script type="module" src="auth-guard.js"></script></body></html>
