@@ -84,4 +84,4 @@ function exportData(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'app
 function importData(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.listings)||!Array.isArray(d.leads)||!Array.isArray(d.sources))throw Error();if(!confirm('سيتم استبدال البيانات المحلية الحالية. هل تريد المتابعة؟'))return;db=d;save();toast('تم استيراد النسخة')}catch{toast('ملف غير صالح')}e.target.value=''};r.readAsText(file)}
 function clearData(){if(!confirm('تحذير: حذف جميع السجلات المحلية نهائياً من هذا المتصفح؟'))return;db={listings:[],leads:[],sources:[]};save();toast('تم مسح البيانات المحلية')}
 render();
-</script></body></html>
+</script><script src="supabase-config.js"></script><script type="module" src="auth-guard.js"></script></body></html>
