@@ -171,7 +171,7 @@ $("aiTaskRows").addEventListener("click",async e=>{
   await loadAITasks();
  }catch(err){msg("تعذر تنفيذ الإجراء: "+err.message)}
 });
-\ninit().then(()=>loadAITasks()).catch(error=>{
+init().then(()=>loadAITasks()).catch(error=>{
  msg("تعذر تهيئة مركز العمليات: "+(error?.message||"خطأ غير معروف"));
  console.error("AL AZM admin initialization failed",error);
 });
