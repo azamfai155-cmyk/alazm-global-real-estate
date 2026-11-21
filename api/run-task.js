@@ -29,8 +29,8 @@ module.exports = async function handler(req, res) {
     // Resolve active role using server credentials; never trust client-supplied role data.
     const pr = await fetch(base+"/rest/v1/profiles?id=eq."+encodeURIComponent(user.id)+"&select=role,active",{headers:serverHeaders});
     const ps = await pr.json(), profile = Array.isArray(ps) ? ps[0] : null;
-    if (!pr.ok || !profile || !profile.active || !["owner","admin"].includes(profile.role)) {
-      return json(res,403,{error:"متاح للمالك أو المدير النشط فقط."});
+    if (!pr.ok || !profile || !profile.active || profile.role!=="owner") {
+      return json(res,403,{error:"متاح لمالك الشركة النشط فقط."});
     }
 
     const taskId = String((req.body||{}).task_id||"");
