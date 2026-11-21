@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
 
     const ai = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent?key="+encodeURIComponent(GEMINI_API_KEY),{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{temperature:0.2,maxOutputTokens:1200}})
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1200}})
     });
     const data = await ai.json();
 
