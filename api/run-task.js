@@ -40,8 +40,7 @@ module.exports = async function handler(req, res) {
       await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{method:"PATCH",headers,body:JSON.stringify({status:"failed",error_message:ai.status===429?"انتهت الحصة المجانية أو تم تجاوز الحد؛ لا يوجد تحويل مدفوع.":"تعذر الاتصال بمزود Gemini ("+ai.status+")."})});
       return json(res,ai.status===429?429:502,{error:ai.status===429?"انتهت الحصة المجانية أو حد الطلبات. لم يحدث أي تحويل مدفوع.":"تعذر إكمال طلب Gemini. لم يتم استخدام مزود مدفوع."});
     }
-    const output=(data.candidates||[]).flatMap(c=>c.content?.parts||[]).map(p=>p.text||"").join("
-").trim();
+    const output=(data.candidates||[]).flatMap(c=>c.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
     if(!output) throw new Error("empty output");
     const save=await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{method:"PATCH",headers,body:JSON.stringify({status:"needs_review",result:{report:output,provider:"Google Gemini",model:MODEL,requires_human_approval:true},completed_at:new Date().toISOString(),error_message:null})});
     if(!save.ok) throw new Error("save failed");
