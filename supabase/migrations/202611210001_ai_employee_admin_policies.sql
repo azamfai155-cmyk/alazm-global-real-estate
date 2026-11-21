@@ -1,3 +1,10 @@
+-- Idempotent policy replacement: align any pre-existing policies with this migration's intended definitions.
+drop policy if exists "admins_read_ai_employees" on public.ai_employees;
+drop policy if exists "admins_read_ai_employee_tasks" on public.ai_employee_tasks;
+drop policy if exists "admins_create_ai_employee_tasks" on public.ai_employee_tasks;
+drop policy if exists "admins_update_ai_employee_tasks" on public.ai_employee_tasks;
+drop policy if exists "admins_read_ai_employee_runs" on public.ai_employee_runs;
+
 -- Admin-only cloud access for AI employee definitions and task management.
 -- AI execution remains backend-only; this migration does not activate agents.
 create policy "admins_read_ai_employees"
