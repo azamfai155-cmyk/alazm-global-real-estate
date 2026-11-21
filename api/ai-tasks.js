@@ -9,7 +9,7 @@ module.exports=async function handler(req,res){
   const service=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!service) return json(res,503,{error:"إعداد مفتاح الخادم السري في Vercel مطلوب."});
   const userHeaders={apikey:anon,Authorization:auth};
-  const serverHeaders={apikey:service,Authorization:"Bearer "+service,"Content-Type":"application/json"};
+  const serverHeaders={apikey:service,"Content-Type":"application/json"};
   try{
     const ur=await fetch(url+"/auth/v1/user",{headers:userHeaders});
     if(!ur.ok) return json(res,401,{error:"جلسة الدخول غير صالحة."});
