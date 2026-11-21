@@ -15,6 +15,6 @@ form.addEventListener("submit",async e=>{
  if(error){msg.textContent="تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور.";btn.disabled=false;return}
  const {data:p,error:pe}=await c.from("profiles").select("role,active").eq("id",data.user.id).single();
  if(pe||!p||!p.active||!["owner","admin"].includes(p.role)){await c.auth.signOut();msg.textContent="تم التحقق من الحساب، لكن ليس لديه صلاحية إدارة الشركة.";btn.disabled=false;return}
- location.replace("admin.html");
+ location.replace("admin-cloud.html");
 });
 </script></body></html>
