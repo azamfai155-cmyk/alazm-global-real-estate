@@ -1,60 +1,70 @@
 # AL AZM GLOBAL REAL ESTATE
 
-المشروع المستقل لشركة العزم العالمية للعقارات.
+المستودع الرسمي للموقع ومنظومة العمليات الرقمية لشركة العزم العالمية للعقارات.
 
-## الملفات
-- `index.html`: الموقع التعريفي العربي المتجاوب.
-- `admin.html`: لوحة عمليات أولية لإدارة العقارات وطلبات العملاء والمصادر وسياسة فحص النشر.
+## الملفات الأساسية
 
-## ما تعمل به النسخة الحالية
-- تسجيل العقارات محلياً.
-- فحص أولي لأهلية النشر: مصدر مسجل، إذن صريح ومرجعه، اكتمال البيانات، وعدم وجود تكرار أو علامة اشتباه.
-- إحالة السجلات غير المستوفية إلى المراجعة البشرية.
-- إدارة طلبات العملاء ومصادر العقارات والشركاء.
-- تصدير واستيراد نسخة احتياطية بصيغة JSON.
+- `index.html`: الموقع التعريفي العام.
+- `login.html`: تسجيل دخول الإدارة عبر Supabase Auth.
+- `admin-cloud.html`: لوحة العمليات السحابية للعقارات والمصادر وطلبات العملاء ومهام الذكاء الاصطناعي.
+- `admin.html`: نموذج إدارة محلي تجريبي قديم؛ لا تستخدمه كلوحة الإنتاج.
+- `employees-cloud.html`: واجهة الفريق السحابي.
+- `employee-profiles.html`: بطاقات الأدوار الوظيفية المقترحة؛ لا تمثل موظفين نشطين.
+- `api/ai-tasks.js`: واجهة خادم لإدارة مهام الذكاء الاصطناعي.
+- `api/run-task.js`: تجربة تشغيل المدير التنفيذي الذكي عبر Gemini.
+- `supabase/migrations/`: مخططات قاعدة البيانات وسياسات الوصول والحماية.
 
-## حدود النسخة الحالية
-هذه نسخة واجهة تشغيل محلية أولية وليست منصة إنتاج مكتملة:
-- البيانات محفوظة في LocalStorage على المتصفح والجهاز الحالي فقط.
-- لا توجد قاعدة بيانات أو مزامنة أو حسابات وصلاحيات مستخدمين.
-- لا توجد واجهات API أو تكاملات خارجية أو نشر تلقائي على منصات أخرى.
-- لا يوجد اتصال فعلي بنموذج ذكاء اصطناعي أو موظفين آليين نشطين.
-- لا تستخدمها لحفظ بيانات هوية أو وثائق ملكية أو معلومات مالية حساسة.
+## ما تم إنجازه والتحقق منه
 
-## النشر على Netlify
-1. افتح https://app.netlify.com/
-2. اختر Add new site ثم Import an existing project.
-3. اربط GitHub واختر المستودع `alazm-global-real-estate` والفرع `main`.
-4. اترك Build command فارغاً.
-5. اجعل Publish directory هو `.`.
-6. اضغط Deploy site.
+- المستودع عام والفرع الأساسي هو `main`.
+- الموقع منشور على Vercel Production، والنطاق الأساسي: https://alazm-global-real-estate.vercel.app/
+- تم إثبات ملكية الموقع في Google Search Console وإضافة بيانات SEO وملف sitemap وrobots.
+- تم إعداد مخطط Supabase وجداول العقارات والمصادر والعملاء وسجل التدقيق وموظفي الذكاء الاصطناعي.
+- نجح تشغيل GitHub Actions رقم 15 بتاريخ 2026-11-21، وكانت خطوة baseline متجاوزة، ثم اكتملت خطوة `supabase db push` بنجاح لتطبيق الترحيلات المعلقة.
+- توجد متغيرات الإنتاج في Vercel: `SUPABASE_URL` و`SUPABASE_SERVICE_ROLE_KEY` و`GEMINI_API_KEY`. لا تضع القيم السرية في هذا المستودع.
+- تم تقييد تشغيل المهام الحالية على المدير التنفيذي الذكي فقط إلى أن تتوفر محركات تنفيذ حقيقية لبقية الأدوار.
 
-## متطلبات ما قبل الإنتاج
-1. قاعدة بيانات وخادم API مع قواعد صلاحيات.
-2. تسجيل دخول آمن وأدوار (مدير، مراجع، موظف).
-3. سجل تدقيق غير قابل للتلاعب لموافقات النشر.
-4. تخزين آمن للمستندات مع ضوابط وصول.
-5. فحص تكرار فعلي ومراجعة قانونية حسب الدولة.
-6. تكاملات مصادر العقارات وفق شروط الاستخدام وحقوق إعادة النشر.
-7. اختبار أمني ووظيفي قبل فتح النظام للعامة.
+## حدود التشغيل الحالية
 
-لا تضف إعلاناً إلا بعد الحصول على إذن المالك أو ممثله المخوّل والتحقق من المعلومات. لا تضع مفاتيح API أو كلمات مرور في هذا المستودع العام.
+- نجاح نشر Vercel يثبت اكتمال عملية النشر، لكنه لا يثبت وحده نجاح تسجيل الدخول أو كل عمليات قاعدة البيانات من واجهة المستخدم.
+- يلزم اختبار حساب مالك نشط في Supabase Auth وصفحتي `login.html` و`admin-cloud.html`.
+- المدير التنفيذي الذكي هو تجربة محدودة عبر Gemini؛ بقية الأدوار الوظيفية تعريفات مقترحة وليست وكلاء نشطين.
+- نموذج طلب الموقع العام يفتح رسالة WhatsApp للمراجعة والإرسال، ولا يحفظ الطلب تلقائياً في جدول العملاء.
+- لا يوجد حالياً محرك بحث عقاري عام متصل بقاعدة البيانات أو تكامل جمع آلي لمصادر العقارات.
+- لا يوجد نشر تلقائي للعقارات إلى مواقع أو منصات خارجية.
+- بيانات الدخول ومفاتيح الخادم لا يجوز وضعها في ملفات الواجهة أو GitHub.
 
+## إعداد قاعدة البيانات والترحيلات
 
-## Supabase database setup (next activation step)
+تم تنفيذ Workflow الترحيلات بنجاح في 2026-11-21 (GitHub Actions run #15). في ذلك التشغيل:
+- تم تجاوز خطوة baseline لأن تسجيل الترحيل الأول كان قد تم مسبقاً.
+- نجحت خطوة `supabase db push` في تطبيق الترحيلات المعلقة.
 
-A first schema migration is included at:
-`supabase/migrations/202611190001_initial_schema.sql`
+مهم: لا تعِد تشغيل خيار `baseline_existing_schema`؛ أصبح افتراضياً `false` حتى لا يتم تعليم الترحيل الأول على أنه مطبق مرة أخرى دون حاجة.
 
-It defines profiles and staff roles, property sources, property listings, media rights metadata, customer leads, audit logs, and row-level security policies.
+رابط تشغيل الترحيلات الناجح:
+https://github.com/azamfai155-cmyk/alazm-global-real-estate/actions/runs/44947190761
 
-To activate it:
-1. Create a Supabase project at https://supabase.com/dashboard (choose a region suitable for your audience and review the free-tier limits).
-2. Open SQL Editor and run the migration file.
-3. Create the first user through Supabase Auth.
-4. Verify that user's UUID in Authentication > Users, then promote that exact account to owner from the SQL Editor:
-   `update public.profiles set role = 'owner', active = true where id = '<verified-auth-user-uuid>';`
-5. Store the Supabase project URL and anon key only in the frontend environment configuration; never expose the service_role key in browser code or GitHub.
-6. Connect the application to Supabase Auth and database APIs, then test RLS with separate owner, reviewer, agent, and anonymous sessions.
+## الخطوات التالية قبل التشغيل التجاري
 
-Important: The migration has been committed but has NOT been executed against a live Supabase project. No Supabase project credentials were available in this repository workflow. Until the migration is applied and RLS tests pass, the cloud database and authentication remain inactive.
+1. تأكيد وجود حساب المالك في Supabase Auth.
+2. التحقق من UUID للحساب الصحيح، ثم التأكد من أن دوره `owner` وأن `active = true` في `public.profiles`.
+3. تسجيل الدخول إلى `/login.html` واختبار لوحة `/admin-cloud.html`.
+4. اختبار إضافة مصدر وعقار وطلب عميل بحساب المالك، ثم التحقق من ظهور السجلات في قاعدة البيانات.
+5. تشغيل مهمة اختبار واحدة للمدير التنفيذي الذكي والتحقق من حفظ التقرير وسجل التشغيل.
+6. اختبار صلاحيات المستخدمين المختلفين وRLS قبل دعوة أي موظف أو فتح النظام للجمهور.
+7. بناء كتالوج العقارات العام ومحرك البحث، ثم ربط استقبال العملاء بقاعدة البيانات عبر مسار آمن مع حماية من الرسائل المزعجة.
+8. بناء تكاملات مصادر العقارات فقط وفق موافقات الملاك وشروط الاستخدام وحقوق إعادة النشر.
+
+## سياسة النشر والحقوق
+
+لا يُنشر أي عقار إلا بعد توثيق مصدره ووجود إذن صريح ونطاق استخدام واضح واكتمال البيانات واجتياز فحوص التكرار والاشتباه. تُحال الحالات الناقصة أو المشبوهة للمراجعة البشرية. لا يُسمح للذكاء الاصطناعي باتخاذ قرارات قانونية أو مالية أو نشر خارجي دون موافقة مخوّلة.
+
+## إعدادات Vercel
+
+تحتاج وظائف الخادم إلى متغيرات إنتاج سرية:
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY` (خادمي فقط)
+- `GEMINI_API_KEY` (خادمي فقط)
+
+المفتاح المنشور في `supabase-config.js` هو Publishable Key، وهو مخصص للواجهة العامة وتظل صلاحياته محكومة بسياسات RLS. لا تستخدم Secret Key أو Service Role Key في المتصفح مطلقاً.
