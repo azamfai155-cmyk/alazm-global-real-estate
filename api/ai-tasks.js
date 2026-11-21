@@ -34,9 +34,6 @@ module.exports=async function handler(req,res){
       const instructions=String(body.instructions||"").trim();
       if(!title||title.length>160||!instructions||instructions.length>4000) return json(res,400,{error:"أدخل عنواناً وتعليمات، ضمن الحدود المسموحة."});
       const employeeId=String(body.employee_id||"ceo");
-      // Only the CEO pilot has a real execution adapter. Reject other roles here
-      // so the dashboard cannot queue tasks that /api/run-task.js cannot execute.
-      if(employeeId!=="ceo") return json(res,409,{error:"التشغيل المتاح حالياً للمدير التنفيذي الذكي فقط؛ بقية الموظفين لم تُربط بمحركات تنفيذ بعد."});
       const er=await fetch(url+"/rest/v1/ai_employees?id=eq."+encodeURIComponent(employeeId)+"&select=id,enabled",{headers:serverHeaders});
       const ea=await er.json(),employee=Array.isArray(ea)?ea[0]:null;
       if(!er.ok||!employee||!employee.enabled) return json(res,409,{error:"الموظف غير موجود أو غير مفعّل."});
