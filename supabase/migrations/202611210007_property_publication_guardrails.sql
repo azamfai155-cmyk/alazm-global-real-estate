@@ -85,7 +85,7 @@ begin
 
   -- Once a listing is public, only owner/admin may edit its content.
   if tg_op = 'UPDATE' and old.status = 'published'
-     and actor_role not in ('owner','admin') then
+     and (actor_role is null or actor_role not in ('owner','admin')) then
     raise exception 'Only owner or admin may edit a published property'
       using errcode = '42501';
   end if;
