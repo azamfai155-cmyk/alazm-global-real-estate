@@ -11,7 +11,7 @@
 <main class="wrap">
 <div class="notice"><b>قاعدة البيانات السحابية:</b> السجلات هنا تُقرأ وتُحفظ في Supabase وفق صلاحيات حسابك. لا يوجد نشر خارجي تلقائي؛ كل عقار يبدأ قيد المراجعة.</div>
 <div id="msg" class="status">جارٍ الاتصال بقاعدة البيانات...</div>
-<div class="tabs"><button class="btn" data-tab="properties">العقارات</button><button class="btn light" data-tab="leads">طلبات العملاء</button><button class="btn light" data-tab="sources">المصادر</button><button class="btn light" data-tab="ai">موظفو الذكاء الاصطناعي</button></div>
+<div class="tabs"><button type="button" class="btn" data-tab="properties">العقارات</button><button type="button" class="btn light" data-tab="leads">طلبات العملاء</button><button class="btn light" data-tab="sources">المصادر</button><button class="btn light" data-tab="ai">موظفو الذكاء الاصطناعي</button></div>
 <section id="properties" class="panel">
 <h2>إضافة عقار</h2>
 <form id="propertyForm" class="grid">
@@ -69,6 +69,19 @@
 </section>\n<p class="muted">الذكاء الاصطناعي والنشر الخارجي لا يزالان متوقفين حتى إعداد واجهات خادم موثوقة واختبارها واعتماد إجراءات الموافقة.</p>
 </main>
 <script src="supabase-config.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+ document.querySelectorAll("[data-tab]").forEach(button=>{
+  button.addEventListener("click",()=>{
+   const target=document.getElementById(button.dataset.tab);
+   if(!target)return;
+   document.querySelectorAll("main section").forEach(section=>section.classList.add("hidden"));
+   target.classList.remove("hidden");
+   document.querySelectorAll("[data-tab]").forEach(item=>item.className=item===button?"btn":"btn light");
+  });
+ });
+});
+</script>
 <script type="module">
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
 const cfg=window.AL_AZM_SUPABASE;
