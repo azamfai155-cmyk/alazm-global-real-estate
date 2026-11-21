@@ -40,7 +40,7 @@ module.exports=async function handler(req,res){
       const priority=["low","normal","high","urgent"].includes(body.priority)?body.priority:"normal";
       const cr=await fetch(url+"/rest/v1/ai_employee_tasks",{method:"POST",headers:{...serverHeaders,Prefer:"return=representation"},body:JSON.stringify({employee_id:employeeId,title,instructions,input_data:body.input_data&&typeof body.input_data==="object"?body.input_data:{},priority,status:"queued",created_by:user.id})});
       const created=await cr.json();
-      if(!cr.ok) return json(res,502,{error:"تعذر إنشاء المهمة.",details:created});
+      if(!cr.ok) return json(res,502,{error:"تعذر إنشاء المهمة."});
       return json(res,201,{task:Array.isArray(created)?created[0]:created});
     }
 
@@ -50,6 +50,15 @@ module.exports=async function handler(req,res){
     const rule=allowed[action];
     if(!rule) return json(res,400,{error:"الإجراء غير معروف."});
     const from=Array.isArray(rule.from)?rule.from:[rule.from];
+    if(action==="approve"){
+      // Approval is permitted only after a non-empty AI report is actually stored.
+      const vr=await fetch(url+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(id)+"&select=id,status,result,employee_id",{headers:serverHeaders});
+      const va=await vr.json(),task=Array.isArray(va)?va[0]:null;
+      const report=task?.result?.report;
+      if(!vr.ok) return json(res,502,{error:"تعذر التحقق من نتيجة المهمة قبل اعتمادها."});
+      if(!task||task.status!=="needs_review"||typeof report!=="string"||!report.trim()||task.result?.requires_human_approval!==true)
+        return json(res,409,{error:"لا يمكن اعتماد المهمة: لا توجد نتيجة مكتملة وصالحة للمراجعة."});
+    }
     const patch={status:rule.to};
     if(action==="approve"){patch.reviewed_by=user.id;patch.reviewed_at=new Date().toISOString();}
     const filter=from.map(s=>"status.eq."+s).join(",");
