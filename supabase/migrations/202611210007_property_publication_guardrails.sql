@@ -108,12 +108,25 @@ set search_path = public
 as $$
 declare
   actor_role public.app_role;
+  parent_status public.property_status;
 begin
   if auth.uid() is null then
     return new;
   end if;
 
   actor_role := public.current_role();
+  select p.status into parent_status from public.properties p where p.id = new.property_id;
+
+  if parent_status = 'published' and actor_role not in ('owner','admin') then
+    raise exception 'Only owner or admin may change media on a published property'
+      using errcode = '42501';
+  end if;
+
+  if parent_status = 'published'
+     and (not new.rights_confirmed or nullif(btrim(coalesce(new.rights_reference,'')), '') is null) then
+    raise exception 'Published properties cannot contain media without verified reuse rights'
+      using errcode = '23514';
+  end if;
 
   if new.rights_confirmed
      and actor_role not in ('owner','admin','reviewer') then
