@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /login.html
+Disallow: /admin-cloud.html
+Disallow: /employees-cloud.html
+Disallow: /api/
+
+Sitemap: https://alazm-global-real-estate.vercel.app/sitemap.xml
