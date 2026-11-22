@@ -79,13 +79,14 @@ module.exports=async function handler(req,res){
     if(!rule) return json(res,400,{error:"الإجراء غير معروف."});
     const from=Array.isArray(rule.from)?rule.from:[rule.from];
     if(action==="approve"){
-      // Approval is permitted only after a non-empty AI report is actually stored.
-      const vr=await fetch(url+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(id)+"&select=id,status,result,employee_id",{headers:serverHeaders});
-      const va=await vr.json(),task=Array.isArray(va)?va[0]:null;
-      const report=task?.result?.report;
-      if(!vr.ok) return json(res,502,{error:"تعذر التحقق من نتيجة المهمة قبل اعتمادها."});
-      if(!task||task.status!=="needs_review"||typeof report!=="string"||!report.trim()||task.result?.requires_human_approval!==true)
-        return json(res,409,{error:"لا يمكن اعتماد المهمة: لا توجد نتيجة مكتملة وصالحة للمراجعة."});
+      // The database RPC validates the stored report and advances a workflow atomically.
+      const approval=await fetch(url+"/rest/v1/rpc/approve_ai_property_workflow_step",{
+        method:"POST",headers:serverHeaders,
+        body:JSON.stringify({p_actor_id:user.id,p_task_id:id})
+      });
+      const approvalResult=await approval.json();
+      if(!approval.ok) return json(res,approval.status===403?403:409,{error:"تعذر اعتماد التقرير أو تحريك مسار العمل. لم يتم إنشاء المرحلة التالية.",details:approvalResult?.message||approvalResult?.hint||null});
+      return json(res,200,{approval:approvalResult});
     }
     const patch={status:rule.to};
     if(action==="approve"){patch.reviewed_by=user.id;patch.reviewed_at=new Date().toISOString();}
