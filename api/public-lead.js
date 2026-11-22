@@ -2,11 +2,17 @@ const json = (res, status, body) => res.status(status).setHeader("Content-Type",
 const crypto = require("crypto");
 const kinds = new Map([
   ["شراء عقار", "buy"],
+  ["Buy property", "buy"],
   ["بيع عقار", "sell"],
+  ["Sell property", "sell"],
   ["استئجار عقار", "rent"],
+  ["Rent a property", "rent"],
   ["تأجير عقار", "lease"],
+  ["Lease a property", "lease"],
   ["شراكة أو تعاون", "partnership"],
-  ["استفسار عام", "inquiry"]
+  ["Partnership or cooperation", "partnership"],
+  ["استفسار عام", "inquiry"],
+  ["General enquiry", "inquiry"]
 ]);
 const clean = (value, max) => String(value || "").trim().replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").slice(0, max);
 
