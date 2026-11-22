@@ -190,7 +190,7 @@ $("propertyForm").addEventListener("submit",async e=>{
   const path=property.id+"/"+crypto.randomUUID()+"."+ext;
   const {error:uploadError}=await sb.storage.from("property-media-private").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
   if(uploadError){msg("تم حفظ سجل العقار، لكن تعذر رفع الصورة "+(i+1)+": "+uploadError.message+"؛ يمكنك إعادة رفعها بعد مراجعة السجل.");await reload();return}
-  const {error:mediaError}=await sb.from("property_media").insert({property_id:property.id,storage_path:path,media_type:file.type,alt_text:v.title,rights_confirmed:mediaRights,rights_reference:mediaRights?v.permission_reference:null,sort_order:i});
+  const {error:mediaError}=await sb.from("property_media").insert({property_id:property.id,storage_path:path,media_type:"image",alt_text:v.title,rights_confirmed:mediaRights,rights_reference:mediaRights?v.permission_reference:null,sort_order:i});
   if(mediaError){await sb.storage.from("property-media-private").remove([path]);msg("تعذر تسجيل بيانات الصورة "+(i+1)+": "+mediaError.message+"؛ تمت محاولة حذف الملف المؤقت.");await reload();return}
  }
  f.reset();await reload();msg(files.length?"تم حفظ العقار ورفع "+files.length+" صورة إلى التخزين الخاص.":"تم حفظ العقار دون صور.");
