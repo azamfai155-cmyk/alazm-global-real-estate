@@ -16,7 +16,7 @@ module.exports=async function handler(req,res){
     const user=await ur.json();
     const pr=await fetch(url+"/rest/v1/profiles?id=eq."+encodeURIComponent(user.id)+"&select=role,active",{headers:serverHeaders});
     const pa=await pr.json(),profile=Array.isArray(pa)?pa[0]:null;
-    if(!pr.ok||!profile||!profile.active||profile.role!=="owner") return json(res,403,{error:"هذه الإدارة متاحة لمالك الشركة النشط فقط."});
+    if(!pr.ok||!profile||!profile.active||!["owner","admin"].includes(profile.role)) return json(res,403,{error:"هذه الإدارة متاحة لمالك الشركة النشط فقط."});
 
     if(req.method==="GET"){
       const [tr,er]=await Promise.all([
