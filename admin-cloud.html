@@ -9,11 +9,11 @@
 <body>
 <header class="top"><div><b>مركز عمليات العزم</b><br><small>AL AZM GLOBAL REAL ESTATE · CLOUD</small></div><div><span id="who">جارٍ التحقق...</span> <button class="btn light" id="logout">خروج</button></div></header>
 <main class="wrap">
-<div class="notice"><b>قاعدة البيانات السحابية:</b> السجلات هنا تُقرأ وتُحفظ في Supabase وفق صلاحيات حسابك. لا يوجد نشر خارجي تلقائي؛ كل عقار يبدأ قيد المراجعة.</div>
+<div class="notice"><b>قاعدة البيانات السحابية:</b> السجلات هنا تُقرأ وتُحفظ في Supabase وفق صلاحيات حسابك. لا يوجد نشر خارجي تلقائي؛ كل عرض يبدأ قيد المراجعة.</div>
 <div id="msg" class="status">جارٍ الاتصال بقاعدة البيانات...</div>
 <div class="tabs"><button type="button" class="btn" data-tab="properties">العروض</button><button type="button" class="btn light" data-tab="leads">المشترون والبائعون</button><button class="btn light" data-tab="sources">المصادر</button><button class="btn light" data-tab="ai">موظفو الذكاء الاصطناعي</button></div>
 <section id="properties" class="panel">
-<h2>إضافة عقار</h2>
+<h2>إضافة عرض جديد</h2>
 <form id="propertyForm" class="grid">
 <div class="field"><label>العنوان *</label><input name="title" required maxlength="160"></div>
 <div class="field"><label>الدولة *</label><input name="country" required></div>
@@ -35,7 +35,7 @@
 <div class="field"><label class="muted"><input type="checkbox" name="permission_confirmed" style="width:auto"> تم التحقق من الإذن الصريح</label></div>
 <div class="field"><label class="muted"><input type="checkbox" name="suspicious" style="width:auto"> توجد علامة اشتباه</label></div>
 <div class="field full"><label>الوصف</label><textarea name="description"></textarea></div>
-<div class="field full"><button class="btn gold">حفظ العقار في قاعدة البيانات</button></div>
+<div class="field full"><button class="btn gold">حفظ العرض في قاعدة البيانات</button></div>
 </form>
 <h2>سجل العقارات</h2><div class="scroll"><table><thead><tr><th>العرض والفئة</th><th>الموقع</th><th>المصدر</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody id="propertyRows"></tbody></table></div>
 </section>
@@ -53,7 +53,7 @@
 <div class="field full"><button class="btn gold">حفظ الطلب</button></div></form>
 <h2>البحث في المشترين والبائعين</h2><div class="grid" style="margin:12px 0"><div class="field"><label for="leadSearch">بحث بالاسم أو الهاتف أو الدولة أو المدينة أو التفاصيل</label><input id="leadSearch" placeholder="ابحث في كل الطلبات"></div><div class="field"><label for="leadKindFilter">نوع العميل</label><select id="leadKindFilter"><option value="">الكل</option><option value="buy">مشتري</option><option value="sell">بائع / مالك</option><option value="rent">باحث عن إيجار</option><option value="lease">مالك يعرض للإيجار</option><option value="partnership">شراكة</option><option value="inquiry">استفسار</option></select></div><div class="field"><label for="leadCategoryFilter">فئة العرض</label><select id="leadCategoryFilter"><option value="">كل الفئات</option><option value="real_estate">عقارات وأراضٍ</option><option value="shop">محلات</option><option value="car">سيارات</option><option value="motorcycle">دراجات نارية</option><option value="other">أخرى</option></select></div></div>
 <p id="leadSearchCount" class="muted">كل طلبات العملاء</p>
-<h2>سجل الطلبات</h2><div class="scroll"><table><thead><tr><th>العميل</th><th>الطلب</th><th>الموقع</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody id="leadRows"></tbody></table></div>
+<h2>سجل الطلبات</h2><div class="scroll"><table><thead><tr><th>العميل</th><th>الطلب والفئة</th><th>الموقع</th><th>اللغة والحالة</th><th>التاريخ</th></tr></thead><tbody id="leadRows"></tbody></table></div>
 </section>
 <section id="sources" class="panel hidden">
 <h2>تسجيل مصدر أو شريك</h2><form id="sourceForm" class="grid">
