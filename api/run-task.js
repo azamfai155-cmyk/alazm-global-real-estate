@@ -19,20 +19,24 @@ module.exports = async function handler(req, res) {
   const userHeaders = {apikey:SUPABASE_ANON_KEY,Authorization:auth,"Content-Type":"application/json"};
   // Supabase sb_secret_* keys are API keys, not JWTs: send them only via apikey.\n  // Do not place the secret key in Authorization, which causes Invalid JWT.\n  const serverHeaders = {apikey:SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json"};
   let claimedTaskId = null;
+  let stage = "بدء التنفيذ";
 
   try {
     // Validate the caller's real Supabase session with the public key.
+    stage = "التحقق من جلسة الدخول";
     const who = await fetch(base+"/auth/v1/user",{headers:userHeaders});
     if (!who.ok) return json(res,401,{error:"جلسة الدخول غير صالحة."});
     const user = await who.json();
 
     // Resolve active role using server credentials; never trust client-supplied role data.
+    stage = "التحقق من صلاحية مالك الشركة";
     const pr = await fetch(base+"/rest/v1/profiles?id=eq."+encodeURIComponent(user.id)+"&select=role,active",{headers:serverHeaders});
     const ps = await pr.json(), profile = Array.isArray(ps) ? ps[0] : null;
     if (!pr.ok || !profile || !profile.active || profile.role!=="owner") {
       return json(res,403,{error:"متاح لمالك الشركة النشط فقط."});
     }
 
+    stage = "قراءة المهمة";
     const taskId = String((req.body||{}).task_id||"");
     if (!/^[0-9a-f-]{36}$/i.test(taskId)) return json(res,400,{error:"معرّف المهمة غير صالح."});
 
@@ -42,11 +46,13 @@ module.exports = async function handler(req, res) {
     // All enabled roles use the same constrained, report-only Gemini adapter.
     if (task.status !== "queued") return json(res,409,{error:"المهمة ليست في حالة انتظار."});
 
+    stage = "التحقق من الموظف";
     const er = await fetch(base+"/rest/v1/ai_employees?id=eq."+encodeURIComponent(task.employee_id)+"&select=id,name,department,purpose,system_instructions,enabled,requires_human_approval",{headers:serverHeaders});
     const es = await er.json(), employee = Array.isArray(es) ? es[0] : null;
     if (!er.ok || !employee || !employee.enabled) return json(res,409,{error:"الموظف غير موجود أو غير مفعّل."});
 
     // Atomic claim: only one request can move a queued task to running.
+    stage = "حجز المهمة للتشغيل";
     const claim = await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId)+"&status=eq.queued",{
       method:"PATCH",headers:{...serverHeaders,Prefer:"return=representation"},
       body:JSON.stringify({status:"running",started_at:new Date().toISOString()})
@@ -66,6 +72,7 @@ module.exports = async function handler(req, res) {
       "بيانات المهمة: "+JSON.stringify(task.input_data||{}).slice(0,3000)
     ].join("\n");
 
+    stage = "الاتصال بمحرك Gemini";
     const ai = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent?key="+encodeURIComponent(GEMINI_API_KEY),{
       method:"POST",headers:{"Content-Type":"application/json"},
       body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1200}})
@@ -85,12 +92,14 @@ module.exports = async function handler(req, res) {
     const output = (data.candidates||[]).flatMap(c=>c.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
     if (!output) throw new Error("empty output");
 
+    stage = "حفظ تقرير المهمة";
     const save = await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{
       method:"PATCH",headers:serverHeaders,
       body:JSON.stringify({status:"needs_review",result:{report:output,provider:"Google Gemini",model:MODEL,requires_human_approval:true},completed_at:new Date().toISOString(),error_message:null})
     });
     if (!save.ok) throw new Error("task result save failed");
 
+    stage = "حفظ سجل التشغيل";
     const runSave = await fetch(base+"/rest/v1/ai_employee_runs",{
       method:"POST",headers:{...serverHeaders,Prefer:"return=minimal"},
       body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"succeeded",safe_summary:output.slice(0,500)})
@@ -100,6 +109,7 @@ module.exports = async function handler(req, res) {
     claimedTaskId = null;
     return json(res,200,{status:"needs_review",report:output,provider:"Google Gemini",model:MODEL});
   } catch (e) {
+    console.error("[ai-run-task] failure", {stage, name:e?.name||"Error", message:String(e?.message||e).slice(0,300), taskId:claimedTaskId});
     if (claimedTaskId) {
       try {
         await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(claimedTaskId)+"&status=eq.running",{
@@ -108,6 +118,6 @@ module.exports = async function handler(req, res) {
         });
       } catch (_) {}
     }
-    return json(res,500,{error:"حدث خطأ أثناء التنفيذ أو حفظ سجل التشغيل. افحص حالة المهمة والسجل قبل إعادة المحاولة."});
+    return json(res,500,{error:"حدث خطأ أثناء مرحلة: "+stage+". لم تُعد المحاولة تلقائياً؛ حدّث البيانات وافحص حالة المهمة والسجل."});
   }
 };
