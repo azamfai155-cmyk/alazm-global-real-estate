@@ -89,7 +89,6 @@ module.exports=async function handler(req,res){
       return json(res,200,{approval:approvalResult});
     }
     const patch={status:rule.to};
-    if(action==="approve"){patch.reviewed_by=user.id;patch.reviewed_at=new Date().toISOString();}
     if(action==="retry"){patch.result=null;patch.error_message=null;patch.started_at=null;patch.completed_at=null;}
     const filter=from.map(s=>"status.eq."+s).join(",");
     const rr=await fetch(url+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(id)+"&or=("+filter+")",{method:"PATCH",headers:{...serverHeaders,Prefer:"return=representation"},body:JSON.stringify(patch)});
