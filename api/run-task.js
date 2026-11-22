@@ -82,13 +82,32 @@ module.exports = async function handler(req, res) {
     const data = await ai.json();
 
     if (!ai.ok) {
-      const message = ai.status===429 ? "انتهت الحصة المجانية أو تم تجاوز الحد؛ لا يوجد تحويل مدفوع." : "تعذر الاتصال بمزود Gemini ("+ai.status+").";
+      const apiError = data && data.error ? data.error : {};
+      const apiMessage = String(apiError.message || "").slice(0,300);
+      const apiReason = Array.isArray(apiError.details)
+        ? apiError.details.map(d => d && d.reason).filter(Boolean).slice(0,5)
+        : [];
+      // Log provider diagnostics only; never log the API key or request URL.
+      console.error("[gemini-api] request failed", {
+        httpStatus: ai.status,
+        apiCode: apiError.code || null,
+        apiStatus: apiError.status || null,
+        apiMessage,
+        apiReason,
+        model: MODEL
+      });
+      let message = "تعذر إكمال طلب Gemini ("+ai.status+"). لم يتم استخدام مزود مدفوع.";
+      if (ai.status===429 || ai.status===402) message = "تعذرت الخدمة بسبب حد الاستخدام أو الحصة. لم يتم استخدام مزود مدفوع.";
+      else if (ai.status===401 || ai.status===403) message = "رفض Gemini مفتاح API أو صلاحية الوصول. تحقق من إعدادات المفتاح والمشروع.";
+      else if (ai.status===404) message = "لم يعثر Gemini على النموذج المطلوب أو أن الوصول إليه غير متاح.";
+      else if (ai.status===400) message = "رفض Gemini صيغة الطلب أو أحد إعداداته.";
+      else if (ai.status===503) message = "خدمة Gemini مشغولة مؤقتاً. لم يتم استخدام مزود مدفوع.";
       await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{
         method:"PATCH",headers:supabaseServiceHeaders,
         body:JSON.stringify({status:"failed",error_message:message,completed_at:new Date().toISOString()})
       });
       claimedTaskId = null;
-      return json(res,ai.status===429?429:502,{error:ai.status===429?"انتهت الحصة المجانية أو حد الطلبات. لم يحدث أي تحويل مدفوع.":"تعذر إكمال طلب Gemini. لم يتم استخدام مزود مدفوع."});
+      return json(res,ai.status===429 || ai.status===402 ? ai.status : 502,{error:message});
     }
 
     const output = (data.candidates||[]).flatMap(c=>c.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
