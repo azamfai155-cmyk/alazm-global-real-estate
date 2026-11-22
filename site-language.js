@@ -55,10 +55,10 @@ function chunks(s,maxBytes){
    const cut=lastSpace>0?lastSpace:current.length;
    out.push(current.slice(0,cut));
    current=current.slice(cut);bytes=utf8Bytes(current);lastSpace=-1;
-   for(let i=0;i<current.length;i++)if(/\\s/.test(current[i]))lastSpace=i+1;
+   for(let i=0;i<current.length;i++)if(/\s/.test(current[i]))lastSpace=i+1;
   }
   current+=ch;bytes+=size;
-  if(/\\s/.test(ch))lastSpace=current.length;
+  if(/\s/.test(ch))lastSpace=current.length;
  }
  if(current)out.push(current);
  return out;
