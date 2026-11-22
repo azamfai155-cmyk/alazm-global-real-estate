@@ -106,6 +106,10 @@ module.exports = async function handler(req, res) {
         method:"PATCH",headers:supabaseServiceHeaders,
         body:JSON.stringify({status:"failed",error_message:message,completed_at:new Date().toISOString()})
       });
+      await fetch(base+"/rest/v1/ai_employee_runs",{
+        method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
+        body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:message+" HTTP "+ai.status})
+      });
       claimedTaskId = null;
       return json(res,ai.status===429 || ai.status===402 ? ai.status : 502,{error:message});
     }
