@@ -27,7 +27,7 @@ footer{max-width:1200px;margin:28px auto;padding:16px 18px 32px;color:var(--mute
 <body>
 <header><div class="nav"><a class="brand" href="/">العزم العالمية للعقارات<small>AL AZM GLOBAL REAL ESTATE</small></a><div><a class="link" href="/">الرئيسية</a> <a class="link" href="/#request">أرسل طلباً</a></div></div></header>
 <main>
-<section class="intro"><h1>العقارات المتاحة</h1><p>يعرض هذا الدليل العقارات التي اجتازت المراجعة وتم اعتماد نشرها فقط. لا تظهر المسودات أو الإعلانات غير المصرح بها.</p></section>
+<section class="intro"><h1>العقارات المتاحة</h1><p>يعرض هذا الدليل العقارات التي اجتازت المراجعة وتم اعتماد نشرها فقط من مختلف الدول. عند تحديد نطاق سعري، اختر رمز العملة لمقارنة أسعار متجانسة.</p></section>
 <form class="filters" id="filters">
 <div class="field"><label for="q">بحث عام</label><input id="q" placeholder="اسم العقار أو وصفه"></div>
 <div class="field"><label for="country">الدولة أو الإقليم</label><input id="country" placeholder="أي دولة في العالم"></div>
@@ -36,6 +36,7 @@ footer{max-width:1200px;margin:28px auto;padding:16px 18px 32px;color:var(--mute
 <div class="field"><label for="listingKind">نوع العرض</label><select id="listingKind"><option value="">بيع أو إيجار</option><option value="sale">للبيع</option><option value="rent">للإيجار</option><option value="lease">تأجير تجاري</option></select></div>
 <div class="field"><label for="minPrice">السعر الأدنى</label><input id="minPrice" type="number" min="0" placeholder="اختياري"></div>
 <div class="field"><label for="maxPrice">السعر الأعلى</label><input id="maxPrice" type="number" min="0" placeholder="اختياري"></div>
+<div class="field"><label for="currency">رمز العملة (ISO)</label><input id="currency" maxlength="3" autocapitalize="characters" placeholder="USD / EUR / AED"></div>
 <div class="actions"><button class="btn gold" type="submit">بحث</button><button class="btn" type="button" id="clear">مسح</button></div>
 </form>
 <div class="status" id="status" role="status" aria-live="polite">جارٍ تحميل العقارات المنشورة...</div>
@@ -76,12 +77,13 @@ function render(rows){
  }).join("");
 }
 function apply(){
- const q=$("q").value.trim().toLowerCase(),country=$("country").value.trim().toLowerCase(),city=$("city").value.trim().toLowerCase(),type=$("propertyType").value,kind=$("listingKind").value;
+ const q=$("q").value.trim().toLowerCase(),country=$("country").value.trim().toLowerCase(),city=$("city").value.trim().toLowerCase(),type=$("propertyType").value,kind=$("listingKind").value,currency=$("currency").value.trim().toUpperCase();
  const min=$("minPrice").value===""?null:Number($("minPrice").value),max=$("maxPrice").value===""?null:Number($("maxPrice").value);
+ if((min!==null||max!==null)&&!currency){$("status").textContent="للمقارنة السعرية الدولية، أدخل رمز العملة أولاً حتى لا تتم مقارنة عملات مختلفة معاً.";return;}
  const rows=all.filter(p=>{
   const hay=[p.title,p.description,p.country,p.city,p.property_type].join(" ").toLowerCase();
   const price=p.price===null?null:Number(p.price);
-  return (!q||hay.includes(q))&&(!country||String(p.country).toLowerCase().includes(country))&&(!city||String(p.city).toLowerCase().includes(city))&&(!type||p.property_type===type)&&(!kind||p.listing_kind===kind)&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max));
+  return (!q||hay.includes(q))&&(!country||String(p.country).toLowerCase().includes(country))&&(!city||String(p.city).toLowerCase().includes(city))&&(!type||p.property_type===type)&&(!kind||p.listing_kind===kind)&&(!currency||String(p.currency||"").trim().toUpperCase()===currency)&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max));
  });
  render(rows);
 }
