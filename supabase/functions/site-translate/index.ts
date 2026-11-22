@@ -26,11 +26,12 @@ Deno.serve(async (req) => {
   const origin = req.headers.get("origin") || "";
   if (!ALLOWED_ORIGINS.has(origin)) return reply({ error: "origin_not_allowed" }, 403);
 
-  let body: { text?: string; target?: string };
+  let body: { text?: string; target?: string; source?: string };
   try { body = await req.json(); } catch { return reply({ error: "invalid_json" }, 400); }
   const source = typeof body.text === "string" ? body.text.trim() : "";
   const target = typeof body.target === "string" ? body.target.toLowerCase() : "";
-  if (!source || source.length > 430 || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === "en") {
+  const sourceLang = body.source === "ar" || body.source === "en" ? body.source : "";
+  if (!source || source.length > 430 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
     return reply({ error: "invalid_input" }, 400);
   }
 
@@ -39,7 +40,7 @@ Deno.serve(async (req) => {
     .from("site_translation_cache")
     .select("translated_text")
     .eq("source_hash", sourceHash)
-    .eq("source_lang", "en")
+    .eq("source_lang", sourceLang)
     .eq("target_lang", target)
     .maybeSingle();
   if (cacheError) return reply({ error: "cache_unavailable" }, 503);
@@ -47,7 +48,7 @@ Deno.serve(async (req) => {
 
   const url = new URL("https://api.mymemory.translated.net/get");
   url.searchParams.set("q", source);
-  url.searchParams.set("langpair", "en|" + target);
+  url.searchParams.set("langpair", sourceLang + "|" + target);
   url.searchParams.set("mt", "1");
   let upstream: Response;
   try {
@@ -68,7 +69,7 @@ Deno.serve(async (req) => {
 
   const { error: insertError } = await supabase.from("site_translation_cache").upsert({
     source_hash: sourceHash,
-    source_lang: "en",
+    source_lang: sourceLang,
     target_lang: target,
     source_text: source,
     translated_text: translated,
