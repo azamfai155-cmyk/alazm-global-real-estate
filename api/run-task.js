@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
     stage = "التحقق من صلاحية مالك الشركة";
     const pr = await fetch(base+"/rest/v1/profiles?id=eq."+encodeURIComponent(user.id)+"&select=role,active",{headers:supabaseServiceHeaders});
     const ps = await pr.json(), profile = Array.isArray(ps) ? ps[0] : null;
-    if (!pr.ok || !profile || !profile.active || profile.role!=="owner") {
+    if (!pr.ok || !profile || !profile.active || !["owner","admin"].includes(profile.role)) {
       return json(res,403,{error:"متاح لمالك الشركة النشط فقط."});
     }
 
@@ -77,7 +77,7 @@ module.exports = async function handler(req, res) {
     stage = "الاتصال بمحرك Gemini";
     const ai = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent?key="+encodeURIComponent(GEMINI_API_KEY),{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:1200}})
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:4096,temperature:0.2}})
     });
     const data = await ai.json();
 
@@ -110,13 +110,29 @@ module.exports = async function handler(req, res) {
       return json(res,ai.status===429 || ai.status===402 ? ai.status : 502,{error:message});
     }
 
-    const output = (data.candidates||[]).flatMap(c=>c.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
-    if (!output) throw new Error("empty output");
+    const candidate = (data.candidates||[])[0] || {};
+    const finishReason = String(candidate.finishReason || "UNKNOWN");
+    const output = (candidate.content?.parts||[]).map(p=>p.text||"").join("\n").trim();
+    // Never mark a truncated or suspiciously short answer as a successful employee run.
+    if (!output || output.length < 700 || finishReason !== "STOP") {
+      stage = "التحقق من اكتمال تقرير Gemini";
+      const diagnostic = "تقرير غير مكتمل: finishReason="+finishReason+"، عدد الأحرف="+output.length+". لم يُعتمد التقرير ولم يُسجل التشغيل كناجح.";
+      await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{
+        method:"PATCH",headers:supabaseServiceHeaders,
+        body:JSON.stringify({status:"failed",result:{report:output,provider:"Google Gemini",model:MODEL,finish_reason:finishReason,output_chars:output.length,incomplete:true,requires_human_approval:false},error_message:diagnostic,completed_at:new Date().toISOString()})
+      });
+      await fetch(base+"/rest/v1/ai_employee_runs",{
+        method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
+        body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:diagnostic})
+      });
+      claimedTaskId = null;
+      return json(res,502,{error:diagnostic});
+    }
 
     stage = "حفظ تقرير المهمة";
     const save = await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{
       method:"PATCH",headers:supabaseServiceHeaders,
-      body:JSON.stringify({status:"needs_review",result:{report:output,provider:"Google Gemini",model:MODEL,requires_human_approval:true},completed_at:new Date().toISOString(),error_message:null})
+      body:JSON.stringify({status:"needs_review",result:{report:output,provider:"Google Gemini",model:MODEL,finish_reason:finishReason,output_chars:output.length,requires_human_approval:true},completed_at:new Date().toISOString(),error_message:null})
     });
     if (!save.ok) throw new Error("task result save failed");
 
