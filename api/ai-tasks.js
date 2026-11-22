@@ -19,6 +19,7 @@ module.exports=async function handler(req,res){
     const pr=await fetch(url+"/rest/v1/profiles?id=eq."+encodeURIComponent(user.id)+"&select=role,active",{headers:serverHeaders});
     const pa=await pr.json(),profile=Array.isArray(pa)?pa[0]:null;
     if(!pr.ok||!profile||!profile.active||!["owner","admin"].includes(profile.role)) return json(res,403,{error:"هذه الإدارة متاحة لمالك الشركة النشط فقط."});
+    if(req.method==="PATCH"&&profile.role!=="owner") return json(res,403,{error:"اعتماد التقارير وتغيير حالات المهام متاح لمالك الشركة فقط."});
 
     if(req.method==="GET"){
       const [tr,er]=await Promise.all([
@@ -68,6 +69,7 @@ module.exports=async function handler(req,res){
     }
     const patch={status:rule.to};
     if(action==="approve"){patch.reviewed_by=user.id;patch.reviewed_at=new Date().toISOString();}
+    if(action==="retry"){patch.result=null;patch.error_message=null;patch.started_at=null;patch.completed_at=null;}
     const filter=from.map(s=>"status.eq."+s).join(",");
     const rr=await fetch(url+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(id)+"&or=("+filter+")",{method:"PATCH",headers:{...serverHeaders,Prefer:"return=representation"},body:JSON.stringify(patch)});
     const rows=await rr.json();
