@@ -33,7 +33,7 @@ async function translateChunk(s){
  let lastError;
  for(let attempt=0;attempt<3;attempt++){
   try{
-   const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:s,target:lang})});
+   const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","apikey":(window.AL_AZM_SUPABASE&&window.AL_AZM_SUPABASE.publishableKey)||""},body:JSON.stringify({text:s,target:lang})});
    const data=await response.json();
    if(response.ok&&data.translated){cache[key]=data.translated;try{localStorage.setItem(cacheKey,JSON.stringify(cache))}catch(e){}return data.translated}
    if(!data.retryable&&response.status!==429)throw new Error(data.error||"translation_unavailable");
