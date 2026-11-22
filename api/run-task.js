@@ -142,14 +142,21 @@ module.exports = async function handler(req, res) {
     if (!save.ok) throw new Error("task result save failed");
 
     stage = "حفظ سجل التشغيل";
-    const runSave = await fetch(base+"/rest/v1/ai_employee_runs",{
-      method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
-      body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"succeeded",safe_summary:output.slice(0,500)})
-    });
-    if (!runSave.ok) throw new Error("run log save failed");
-
+    // The report is now safely stored for human review. Run telemetry is best-effort:
+    // a logging outage must not turn a successful report into a misleading failed response.
     claimedTaskId = null;
-    return json(res,200,{status:"needs_review",report:output,provider:"Google Gemini",model:MODEL});
+    let runLogSaved = false;
+    try {
+      const runSave = await fetch(base+"/rest/v1/ai_employee_runs",{
+        method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
+        body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"succeeded",safe_summary:output.slice(0,500)})
+      });
+      runLogSaved = runSave.ok;
+      if (!runLogSaved) console.error("[ai-run-task] report saved but run log insert failed",{httpStatus:runSave.status,taskId});
+    } catch (logError) {
+      console.error("[ai-run-task] report saved but run log request failed",{name:logError?.name||"Error",taskId});
+    }
+    return json(res,200,{status:"needs_review",report:output,provider:"Google Gemini",model:MODEL,run_log_saved:runLogSaved});
   } catch (e) {
     console.error("[ai-run-task] failure", {stage, name:e?.name||"Error", message:String(e?.message||e).slice(0,300), taskId:claimedTaskId});
     if (claimedTaskId) {
