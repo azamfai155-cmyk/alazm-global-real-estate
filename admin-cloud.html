@@ -66,6 +66,19 @@
 <div class="field full"><label>تعليمات المهمة *</label><textarea name="instructions" required maxlength="4000" placeholder="اكتب المطلوب والبلدان والقيود ومصادر البيانات المسموح بها"></textarea></div>
 <div class="field full"><button class="btn gold">إنشاء مهمة للذكاء الاصطناعي</button></div>
 </form>
+<h2>مسار تجهيز العقار المتتابع</h2>
+<p class="muted">ينشئ المسار مهمة واحدة فقط في البداية. لا تنتقل المهمة التالية إلا بعد مراجعة واعتماد تقرير المرحلة الحالية من مالك الشركة. لا يوجد نشر تلقائي.</p>
+<form id="aiWorkflowForm" class="grid">
+ <div class="field"><label>عنوان العقار أو العرض *</label><input name="title" required maxlength="160" placeholder="مثال: عرض شقة في صنعاء"></div>
+ <div class="field"><label>اسم المصدر *</label><input name="source_name" required maxlength="200" placeholder="اسم الحساب أو الموقع أو الوسيط"></div>
+ <div class="field full"><label>الرابط الأصلي للعرض *</label><input name="source_url" type="url" required maxlength="1000" placeholder="https://..."></div>
+ <div class="field"><label>مرجع إذن إعادة النشر</label><input name="permission_reference" maxlength="1000" placeholder="رابط موافقة أو رقم مستند؛ اتركه فارغاً إن لم يتوفر"></div>
+ <div class="field"><label>نطاق الإذن</label><input name="permission_scope" maxlength="500" placeholder="النص والصور والقنوات والمدة"></div>
+ <div class="field full"><label>ملاحظات وبيانات العرض</label><textarea name="notes" maxlength="4000" placeholder="الموقع، السعر، المساحة، نوع العقار، بيانات أخرى متاحة"></textarea></div>
+ <div class="field full"><button class="btn gold" type="submit">إنشاء مسار فحص العقار</button></div>
+</form>
+<h3>المسارات الحالية</h3>
+<div class="scroll"><table><thead><tr><th>العرض</th><th>الحالة</th><th>المرحلة الحالية</th><th>تقدم الخطوات</th></tr></thead><tbody id="aiWorkflowRows"></tbody></table></div>
 <h2>المهام والموظفون</h2><div id="aiEmployees" class="status">جارٍ تحميل الموظفين...</div>
 <div class="scroll"><table><thead><tr><th>المهمة</th><th>الموظف</th><th>الحالة</th><th>النتيجة</th><th>الإجراءات</th></tr></thead><tbody id="aiTaskRows"></tbody></table></div>
 </section>
@@ -141,6 +154,15 @@ async function loadAITasks(){
   $("aiEmployees").textContent="الموظفون: "+d.employees.map(e=>e.name+" ("+(e.enabled?"مفعّل":"متوقف")+")").join(" · ");
   const canReviewTasks=d.role==="owner";
   $("aiEmployee").innerHTML=d.employees.filter(e=>e.enabled).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join("");
+  $("aiWorkflowForm").classList.toggle("hidden",!canReviewTasks);
+  const wfStatus={active:"قيد المراجعة المتتابعة",blocked:"متوقف بسبب فشل",completed:"اكتمل الفحص",cancelled:"ملغى"};
+  const stepStatus={blocked:"محجوب حتى اعتماد السابق",queued:"بانتظار التشغيل",running:"قيد التنفيذ",needs_review:"بانتظار اعتماد المالك",completed:"معتمد",failed:"فشل",cancelled:"ملغى"};
+  $("aiWorkflowRows").innerHTML=(d.workflows||[]).map(w=>{
+   const steps=(w.ai_workflow_steps||[]).sort((a,b)=>a.step_order-b.step_order);
+   const current=steps.find(s=>s.step_order===w.current_step);
+   const progress=steps.map(s=>esc(s.step_order)+". "+esc(s.employee_id)+": "+esc(stepStatus[s.status]||s.status)).join(" · ");
+   return '<tr><td>'+esc(w.title)+'</td><td>'+esc(wfStatus[w.status]||w.status)+'</td><td>'+esc(current?.title||"—")+'</td><td>'+progress+'</td></tr>';
+  }).join("")||'<tr><td colspan="4">لا توجد مسارات عقارية بعد.</td></tr>';
   $("aiTaskRows").innerHTML=d.tasks.map(t=>{
    const result=t.result?.report||t.error_message||"—";
    let actions="";
@@ -153,6 +175,16 @@ async function loadAITasks(){
   }).join("");
  }catch(e){$("aiEmployees").textContent="تعذر تحميل المهام: "+e.message}
 }
+$("aiWorkflowForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const v=Object.fromEntries(new FormData(e.target));
+ const source_payload={source_name:v.source_name,source_url:v.source_url,permission_reference:v.permission_reference||null,permission_scope:v.permission_scope||null,notes:v.notes||null};
+ try{
+  await aiRequest("/api/ai-tasks","POST",{workflow_template_id:"property_intake_v1",title:v.title,source_payload});
+  e.target.reset();await loadAITasks();
+  msg("تم إنشاء مسار العقار. أُنشئت مهمة الباحث الأولى فقط؛ شغّلها بعد مراجعة البيانات. بقية الموظفين محجوبون حتى اعتماد كل مرحلة.");
+ }catch(err){msg("تعذر إنشاء مسار العقار: "+err.message)}
+});
 $("aiTaskForm").addEventListener("submit",async e=>{
  e.preventDefault();const v=Object.fromEntries(new FormData(e.target));
  try{await aiRequest("/api/ai-tasks","POST",v);e.target.reset();await loadAITasks();msg("تم إنشاء المهمة في قائمة الانتظار. لم يبدأ تشغيلها بعد.");}
