@@ -27,12 +27,13 @@ footer{max-width:1200px;margin:28px auto;padding:16px 18px 32px;color:var(--mute
 <body>
 <header><div class="nav"><a class="brand" href="/">العزم العالمية للعقارات<small>AL AZM GLOBAL REAL ESTATE</small></a><div><a class="link" href="/">الرئيسية</a> <a class="link" href="/#request">أرسل طلباً</a></div></div></header>
 <main>
-<section class="intro"><h1>العقارات المتاحة</h1><p>يعرض هذا الدليل العقارات التي اجتازت المراجعة وتم اعتماد نشرها فقط من مختلف الدول. عند تحديد نطاق سعري، اختر رمز العملة لمقارنة أسعار متجانسة.</p></section>
+<section class="intro"><h1>العروض المتاحة</h1><p>تصفح العقارات والمحلات التجارية والسيارات والدراجات النارية المنشورة بعد اجتياز التحقق والمراجعة، من مختلف الدول. عند تحديد نطاق سعري، اختر رمز العملة.</p></section>
 <form class="filters" id="filters">
 <div class="field"><label for="q">بحث عام</label><input id="q" placeholder="اسم العقار أو وصفه"></div>
 <div class="field"><label for="country">الدولة أو الإقليم</label><input id="country" placeholder="أي دولة في العالم"></div>
 <div class="field"><label for="city">المدينة</label><input id="city" placeholder="أي مدينة حول العالم"></div>
-<div class="field"><label for="propertyType">نوع العقار</label><select id="propertyType"><option value="">كل الأنواع</option><option>شقة</option><option>فيلا</option><option>أرض</option><option>مبنى تجاري</option><option>مكتب</option><option>مستودع</option><option>أخرى</option></select></div>
+<div class="field"><label for="category">فئة العرض</label><select id="category"><option value="">كل الفئات</option><option value="real_estate">عقارات سكنية وأراضٍ</option><option value="shop">محلات تجارية</option><option value="car">سيارات</option><option value="motorcycle">دراجات نارية</option></select></div>
+<div class="field"><label for="propertyType">النوع أو الطراز</label><input id="propertyType" placeholder="شقة، فيلا، تويوتا..."></div>
 <div class="field"><label for="listingKind">نوع العرض</label><select id="listingKind"><option value="">بيع أو إيجار</option><option value="sale">للبيع</option><option value="rent">للإيجار</option><option value="lease">تأجير تجاري</option></select></div>
 <div class="field"><label for="minPrice">السعر الأدنى</label><input id="minPrice" type="number" min="0" placeholder="اختياري"></div>
 <div class="field"><label for="maxPrice">السعر الأعلى</label><input id="maxPrice" type="number" min="0" placeholder="اختياري"></div>
@@ -52,6 +53,7 @@ const sb=createClient(cfg.url,cfg.publishableKey);
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const listingLabels={sale:"للبيع",rent:"للإيجار",lease:"تأجير تجاري"};
+const categoryLabels={real_estate:"عقار",shop:"محل تجاري",car:"سيارة",motorcycle:"دراجة نارية"};
 let all=[];
 function priceText(p,c){
  if(p===null||p===undefined||p==="")return "السعر عند التواصل";
@@ -70,26 +72,32 @@ function render(rows){
   if(p.bedrooms!==null)facts.push("غرف: "+esc(p.bedrooms));
   if(p.bathrooms!==null)facts.push("حمامات: "+esc(p.bathrooms));
   if(p.area_sqm!==null)facts.push("المساحة: "+esc(p.area_sqm)+" م²");
+  const extra=p.category_details||{};
+  if(extra.brand)facts.push("الشركة: "+esc(extra.brand));
+  if(extra.model)facts.push("الطراز: "+esc(extra.model));
+  if(extra.year)facts.push("السنة: "+esc(extra.year));
+  if(extra.mileage)facts.push("المسافة: "+esc(extra.mileage)+" كم");
+  if(extra.condition)facts.push("الحالة: "+esc(extra.condition));
   const summary=String(p.description||"").slice(0,280);
   const msg="أرغب بالاستفسار عن العقار: "+p.title+" - "+p.city+", "+p.country+" (رقم المرجع: "+p.id+")";
   const wa="https://wa.me/967711273188?text="+encodeURIComponent(msg);
-  return '<article class="card"><div class="meta"><span class="tag">'+esc(listingLabels[p.listing_kind]||"عرض عقاري")+'</span><span class="tag">'+esc(p.property_type)+'</span></div><h3>'+esc(p.title)+'</h3><div class="muted">'+esc(p.city)+", "+esc(p.country)+'</div><div class="price">'+esc(priceText(p.price,p.currency))+'</div>'+(summary?'<p class="desc">'+esc(summary)+'</p>':'')+'<div class="facts">'+facts.join("")+'</div><a class="btn gold" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">استفسر عبر واتساب</a></article>';
+  return '<article class="card"><div class="meta"><span class="tag">'+esc(categoryLabels[p.listing_category]||"عرض")+'</span><span class="tag">'+esc(listingLabels[p.listing_kind]||"للاستفسار")+'</span><span class="tag">'+esc(p.property_type)+'</span></div><h3>'+esc(p.title)+'</h3><div class="muted">'+esc(p.city)+", "+esc(p.country)+'</div><div class="price">'+esc(priceText(p.price,p.currency))+'</div>'+(summary?'<p class="desc">'+esc(summary)+'</p>':'')+'<div class="facts">'+facts.join("")+'</div><a class="btn gold" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">استفسر عبر واتساب</a></article>';
  }).join("");
 }
 function apply(){
- const q=$("q").value.trim().toLowerCase(),country=$("country").value.trim().toLowerCase(),city=$("city").value.trim().toLowerCase(),type=$("propertyType").value,kind=$("listingKind").value,currency=$("currency").value.trim().toUpperCase();
+ const q=$("q").value.trim().toLowerCase(),country=$("country").value.trim().toLowerCase(),city=$("city").value.trim().toLowerCase(),category=$("category").value,type=$("propertyType").value.trim().toLowerCase(),kind=$("listingKind").value,currency=$("currency").value.trim().toUpperCase();
  const min=$("minPrice").value===""?null:Number($("minPrice").value),max=$("maxPrice").value===""?null:Number($("maxPrice").value);
  if((min!==null||max!==null)&&!currency){$("status").textContent="للمقارنة السعرية الدولية، أدخل رمز العملة أولاً حتى لا تتم مقارنة عملات مختلفة معاً.";return;}
  const rows=all.filter(p=>{
-  const hay=[p.title,p.description,p.country,p.city,p.property_type].join(" ").toLowerCase();
+  const hay=[p.title,p.description,p.country,p.city,p.property_type,p.category_details?.brand,p.category_details?.model].join(" ").toLowerCase();
   const price=p.price===null?null:Number(p.price);
-  return (!q||hay.includes(q))&&(!country||String(p.country).toLowerCase().includes(country))&&(!city||String(p.city).toLowerCase().includes(city))&&(!type||p.property_type===type)&&(!kind||p.listing_kind===kind)&&(!currency||String(p.currency||"").trim().toUpperCase()===currency)&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max));
+  return (!q||hay.includes(q))&&(!country||String(p.country).toLowerCase().includes(country))&&(!city||String(p.city).toLowerCase().includes(city))&&(!category||p.listing_category===category)&&(!type||String(p.property_type||"").toLowerCase().includes(type))&&(!kind||p.listing_kind===kind)&&(!currency||String(p.currency||"").trim().toUpperCase()===currency)&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max));
  });
  render(rows);
 }
 async function load(){
  $("status").textContent="جارٍ تحميل العقارات المنشورة...";
- const {data,error}=await sb.from("properties").select("id,title,description,country,city,property_type,listing_kind,price,currency,bedrooms,bathrooms,area_sqm,published_at").eq("status","published").order("published_at",{ascending:false}).limit(100);
+ const {data,error}=await sb.from("properties").select("id,title,description,country,city,property_type,listing_category,category_details,listing_kind,price,currency,bedrooms,bathrooms,area_sqm,published_at").eq("status","published").order("published_at",{ascending:false}).limit(100);
  if(error){$("status").className="status error";$("status").textContent="تعذر تحميل العقارات حالياً. يرجى المحاولة لاحقاً.";return;}
  all=data||[];$("status").className="status";$("status").textContent=all.length?"تم تحميل العقارات المنشورة فقط.":"لا توجد عقارات منشورة حتى الآن؛ لن تظهر العقارات قيد المراجعة هنا.";
  apply();
