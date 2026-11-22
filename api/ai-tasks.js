@@ -28,7 +28,7 @@ module.exports=async function handler(req,res){
       ]);
       const [tasks,employees]=await Promise.all([tr.json(),er.json()]);
       if(!tr.ok||!er.ok) return json(res,502,{error:"تعذر قراءة قائمة مهام الذكاء الاصطناعي."});
-      return json(res,200,{tasks,employees});
+      return json(res,200,{tasks,employees,role:profile.role});
     }
 
     if(req.method==="POST"){
