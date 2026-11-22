@@ -1,14 +1,14 @@
 const json = (res, status, body) => res.status(status).setHeader("Content-Type", "application/json").setHeader("Cache-Control", "no-store").json(body);
 const recent = new Map();
 const kinds = new Map([
-  ["شراء عقار","buy"],
-  ["بيع عقار","sell"],
-  ["استئجار عقار","rent"],
-  ["تأجير عقار","lease"],
-  ["شراكة أو تعاون","partnership"],
-  ["استفسار عام","inquiry"]
+  ["شراء عقار", "buy"],
+  ["بيع عقار", "sell"],
+  ["استئجار عقار", "rent"],
+  ["تأجير عقار", "lease"],
+  ["شراكة أو تعاون", "partnership"],
+  ["استفسار عام", "inquiry"]
 ]);
-const clean = (value, max) => String(value || "").trim().replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, "").slice(0, max);
+const clean = (value, max) => String(value || "").trim().replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").slice(0, max);
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { error: "Method not allowed" });
   }
 
-  // This endpoint is intentionally same-origin: it accepts submissions only from the production site.
+  // Accept browser submissions only from the production website.
   const origin = req.headers.origin || "";
   let originHost = "";
   try { originHost = new URL(origin).host.toLowerCase(); } catch (_) {}
@@ -53,7 +53,7 @@ module.exports = async function handler(req, res) {
   const country = clean(body.country, 70);
   const city = clean(body.city, 70);
   const kind = kinds.get(clean(body.purpose, 40));
-  const digits = phone.replace(/\\D/g, "");
+  const digits = phone.replace(/\D/g, "");
   if (full_name.length < 2) return json(res, 400, { error: "أدخل الاسم بشكل صحيح." });
   if (digits.length < 7 || digits.length > 20) return json(res, 400, { error: "أدخل رقم تواصل صحيحاً مع مفتاح الدولة." });
   if (!country || !city) return json(res, 400, { error: "الدولة والمدينة مطلوبتان." });
@@ -69,7 +69,8 @@ module.exports = async function handler(req, res) {
   if (budget) detailParts.push("الميزانية التقريبية: " + budget);
   if (contactTime) detailParts.push("وقت التواصل: " + contactTime);
   if (details) detailParts.push("تفاصيل العميل: " + details);
-  const serviceUrl = String(process.env.SUPABASE_URL || "https://latgmqklsszgictpuerp.supabase.co").replace(/\\/$/, "");
+
+  const serviceUrl = String(process.env.SUPABASE_URL || "https://latgmqklsszgictpuerp.supabase.co").replace(/\/$/, "");
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!serviceKey) return json(res, 503, { error: "خدمة استقبال الطلبات غير مهيأة حالياً. حاول لاحقاً." });
 
@@ -87,7 +88,7 @@ module.exports = async function handler(req, res) {
         kind,
         country,
         city,
-        details: detailParts.join("\\n").slice(0, 1600) || null,
+        details: detailParts.join("\n").slice(0, 1600) || null,
         consent_to_contact: true
       }),
       signal: AbortSignal.timeout(8000)
