@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return reply({ error: "invalid_json" }, 400); }
   const source = typeof body.text === "string" ? body.text.trim() : "";
   const target = typeof body.target === "string" ? body.target.toLowerCase() : "";
-  const sourceLang = body.source === "ar" || body.source === "en" ? body.source : "";
+  const sourceLang = body.source === undefined ? "en" : (body.source === "ar" || body.source === "en" ? body.source : "");
   if (!source || source.length > 430 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
     return reply({ error: "invalid_input" }, 400);
   }
