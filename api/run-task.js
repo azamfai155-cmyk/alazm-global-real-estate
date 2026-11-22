@@ -17,7 +17,9 @@ module.exports = async function handler(req, res) {
 
   const base = SUPABASE_URL.replace(/\/$/,"");
   const userHeaders = {apikey:SUPABASE_ANON_KEY,Authorization:auth,"Content-Type":"application/json"};
-  // Supabase sb_secret_* keys are API keys, not JWTs: send them only via apikey.\n  // Do not place the secret key in Authorization, which causes Invalid JWT.\n  const supabaseServiceHeaders = {apikey:SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json"};
+  // Supabase secret keys are API keys, not JWTs. Send them only via apikey.
+  // Do not place the secret key in Authorization, which causes Invalid JWT.
+  const supabaseServiceHeaders = {apikey:SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json"};
   let claimedTaskId = null;
   let stage = "بدء التنفيذ";
 
