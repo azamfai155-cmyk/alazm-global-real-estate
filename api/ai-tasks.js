@@ -29,7 +29,7 @@ module.exports=async function handler(req,res){
       ]);
       const [tasks,employees,workflows]=await Promise.all([tr.json(),er.json(),wr.json()]);
       if(!tr.ok||!er.ok||!wr.ok) return json(res,502,{error:"تعذر قراءة قائمة المهام أو مسارات العمل."});
-      return json(res,200,{tasks,employees,workflows,role:profile.role});
+      return json(res,200,{tasks,employees,workflows,role:profile.role,ai_execution_enabled:process.env.GEMINI_FREE_TIER_CONFIRMED==="true"});
     }
 
     if(req.method==="POST"){
