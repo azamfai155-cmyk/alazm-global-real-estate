@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
   const source = typeof body.text === "string" ? body.text.trim() : "";
   const target = typeof body.target === "string" ? body.target.toLowerCase() : "";
   const sourceLang = body.source === undefined ? "en" : (body.source === "ar" || body.source === "en" ? body.source : "");
-  if (!source || source.length > 430 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
+  if (!source || new TextEncoder().encode(source).length > 450 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
     return reply({ error: "invalid_input" }, 400);
   }
 
@@ -57,6 +57,26 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (cacheError) return reply({ error: "cache_unavailable" }, 503);
   if (cached?.translated_text) return reply({ translated: cached.translated_text, cached: true });
+
+  const charCount = Array.from(source).length;
+  const { data: clientBudgetAllowed, error: clientBudgetError } = await supabase.rpc("reserve_site_translation_chars", {
+    p_ip_hash: ipHash,
+    p_char_count: charCount,
+  });
+  if (clientBudgetError) return reply({ error: "translation_budget_unavailable", retryable: true }, 503);
+  if (clientBudgetAllowed !== true) {
+    return reply({ error: "daily_translation_budget_exhausted", retryable: false }, 422);
+  }
+
+  const globalBudgetHash = await sha256("site-translation-global:" + SERVICE_ROLE_KEY);
+  const { data: globalBudgetAllowed, error: globalBudgetError } = await supabase.rpc("reserve_site_translation_chars", {
+    p_ip_hash: globalBudgetHash,
+    p_char_count: charCount,
+  });
+  if (globalBudgetError) return reply({ error: "translation_budget_unavailable", retryable: true }, 503);
+  if (globalBudgetAllowed !== true) {
+    return reply({ error: "daily_translation_service_budget_exhausted", retryable: false }, 422);
+  }
 
   const url = new URL("https://api.mymemory.translated.net/get");
   url.searchParams.set("q", source);
