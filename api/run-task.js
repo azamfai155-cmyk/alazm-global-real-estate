@@ -1,8 +1,10 @@
 const MODEL = "gemini-3.8-flash";
-const json = (res, status, body) => res.status(status).setHeader("Content-Type", "application/json").json(body);
+const json = (res, status, body) => res.status(status).setHeader("Content-Type", "application/json").setHeader("Cache-Control", "no-store").json(body);
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") return json(res,405,{error:"Method not allowed"});
+  const contentLength = Number(req.headers["content-length"] || 0);
+  if (Number.isFinite(contentLength) && contentLength > 2048) return json(res,413,{error:"حجم الطلب أكبر من الحد المسموح."});
   const auth = req.headers.authorization || "";
   if (!auth.startsWith("Bearer ")) return json(res,401,{error:"تسجيل الدخول مطلوب."});
 
