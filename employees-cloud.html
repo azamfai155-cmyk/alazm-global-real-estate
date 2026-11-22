@@ -31,9 +31,38 @@ renderStaff();renderTasks();$("runs").innerHTML=(r.data||[]).length?(r.data||[])
 const enabledCount=staff.filter(x=>x.enabled).length;const successfulRuns=(r.data||[]).filter(x=>x.status==="succeeded").length;message("اتصال سحابي ناجح · "+staff.length+" دوراً مسجلاً · "+enabledCount+" دوراً مفعّلاً · "+tasks.length+" مهمة · "+successfulRuns+" تشغيل ناجح إجمالاً."); }
 function renderStaff(){const q=$("search").value.toLowerCase();$("staff").innerHTML=staff.filter(x=>(x.name+" "+x.department+" "+x.purpose).toLowerCase().includes(q)).map(x=>'<article class="card"><div class="avatar">'+(x.id==="ceo"?"👔":x.id==="sourcing"?"🔎":x.id==="rights"?"⚖️":x.id==="quality"?"🧾":x.id==="marketing"?"📣":x.id==="publishing"?"🚀":x.id==="buyers"?"🤝":x.id==="sellers"?"🏠":x.id==="sales"?"🎯":x.id==="analyst"?"📊":x.id==="localization"?"🌍":"🛡️")+'</div><h3>'+esc(x.name)+'</h3><div class="muted">'+esc(x.department)+'</div><p>'+esc(x.purpose)+'</p><span class="pill">'+(x.enabled?"مفعّل في قاعدة البيانات":"غير مفعّل")+'</span> <span class="pill">موافقة بشرية مطلوبة</span></article>').join("")}
 function filterStaff(){renderStaff()}
-function renderTasks(){$("tasks").innerHTML=tasks.length?tasks.map(x=>'<div class="task"><div><b>'+esc(x.title)+'</b><div class="muted">'+esc(staff.find(s=>s.id===x.employee_id)?.name||x.employee_id)+' · '+esc(x.priority)+' · '+new Date(x.created_at).toLocaleString("ar")+'</div><div class="muted">'+esc(x.instructions||"لا توجد تفاصيل")+'</div></div><div><select data-status="'+x.id+'"><option value="queued" '+(x.status==="queued"?"selected":"")+'>في الطابور</option><option value="needs_review" '+(x.status==="needs_review"?"selected":"")+'>مراجعة بشرية</option><option value="completed" '+(x.status==="completed"?"selected":"")+'>مكتملة يدوياً</option><option value="cancelled" '+(x.status==="cancelled"?"selected":"")+'>ملغاة</option><option value="failed" '+(x.status==="failed"?"selected":"")+'>فشلت</option></select>'+(x.status==="queued"&&staff.find(s=>s.id===x.employee_id)?.enabled?' <button class="btn gold" data-run="'+x.id+'">تشغيل الموظف</button>':"")+(x.result?.report?'<details style="margin-top:10px;grid-column:1/-1"><summary>عرض تقرير المدير التنفيذي الكامل</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.8 Tahoma,Arial;margin:10px 0;padding:12px;background:#f5f7f5;border-radius:8px">'+esc(x.result.report)+'</pre></details>':"")+(x.error_message?'<div class="muted" style="grid-column:1/-1;color:#923b32">'+esc(x.error_message)+'</div>':"")+'</div></div>').join(""):'<p class="muted">لا توجد مهام بعد.</p>';
-document.querySelectorAll("[data-run]").forEach(btn=>btn.onclick=async()=>{if(!confirm("تشغيل هذا الموظف عبر Gemini؟ التشغيل تحليلي فقط ولا يجمع بيانات من الإنترنت أو ينفذ إجراءً خارجياً."))return;btn.disabled=true;message("جارٍ تشغيل المهمة...");const {data:{session}}=await sb.auth.getSession();const response=await fetch("/api/run-task",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({task_id:btn.dataset.run})});const result=await response.json();if(!response.ok){message(result.error||"تعذر تشغيل المهمة.",true);btn.disabled=false;return}message("اكتملت المعالجة وأُحيلت النتيجة لمراجعتك.");await load()});
-document.querySelectorAll("[data-status]").forEach(el=>{if(currentProfileRole!=="owner"){for(const opt of el.options){if(["completed","cancelled"].includes(opt.value))opt.disabled=true}}el.onchange=async()=>{const id=el.dataset.status;const patch={status:el.value};if(currentProfileRole==="owner"&&["needs_review","completed","cancelled"].includes(el.value)){const user=(await sb.auth.getUser()).data.user;patch.reviewed_by=user.id;patch.reviewed_at=new Date().toISOString()}const {error}=await sb.from("ai_employee_tasks").update(patch).eq("id",id);if(error){message("تعذر تحديث الحالة: "+error.message,true);await load();return}await load()}})}
+function renderTasks(){
+ const labels={queued:"في الطابور",running:"قيد التنفيذ",needs_review:"بانتظار المراجعة",completed:"معتمدة",cancelled:"ملغاة",failed:"فشلت"};
+ $("tasks").innerHTML=tasks.length?tasks.map(x=>{
+  const employee=staff.find(s=>s.id===x.employee_id);
+  const actions=[];
+  if(x.status==="queued"&&employee?.enabled)actions.push('<button class="btn gold" data-run="'+esc(x.id)+'">تشغيل الموظف</button>');
+  if(x.status==="needs_review")actions.push('<button class="btn gold" data-action="approve" data-id="'+esc(x.id)+'">اعتماد بعد المراجعة</button>');
+  if(["queued","needs_review","failed"].includes(x.status))actions.push('<button class="btn light" data-action="cancel" data-id="'+esc(x.id)+'">إلغاء المهمة</button>');
+  if(x.status==="failed")actions.push('<button class="btn light" data-action="retry" data-id="'+esc(x.id)+'">إعادة إلى الطابور</button>');
+  const report=x.result?.report?'<details style="margin-top:10px"><summary>عرض التقرير الكامل</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.8 Tahoma,Arial;padding:12px;background:#f5f7f5;border-radius:8px">'+esc(x.result.report)+'</pre></details>':'';
+  return '<div class="task"><div><b>'+esc(x.title)+'</b><div class="muted">'+esc(employee?.name||x.employee_id)+' · '+esc(x.priority)+' · '+new Date(x.created_at).toLocaleString("ar")+'</div><div class="muted">'+esc(x.instructions||"لا توجد تفاصيل")+'</div><span class="pill">'+esc(labels[x.status]||x.status)+'</span>'+report+(x.error_message?'<div class="muted" style="color:#923b32">'+esc(x.error_message)+'</div>':'')+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:start">'+actions.join("")+'</div></div>';
+ }).join(""):'<p class="muted">لا توجد مهام بعد.</p>';
+ document.querySelectorAll("[data-run]").forEach(btn=>btn.onclick=async()=>{
+  if(!confirm("تشغيل هذا الموظف عبر Gemini؟ التشغيل تحليلي فقط ولا يجمع بيانات من الإنترنت أو ينفذ إجراءً خارجياً."))return;
+  btn.disabled=true;message("جارٍ تشغيل المهمة...");
+  const {data:{session}}=await sb.auth.getSession();
+  const response=await fetch("/api/run-task",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({task_id:btn.dataset.run})});
+  const result=await response.json();
+  if(!response.ok){message(result.error||"تعذر تشغيل المهمة.",true);await load();return}
+  message("اكتملت المعالجة وأُحيلت النتيجة للمراجعة.");await load()
+ });
+ document.querySelectorAll("[data-action]").forEach(btn=>btn.onclick=async()=>{
+  const action=btn.dataset.action,id=btn.dataset.id;
+  const prompts={approve:"هل راجعت التقرير كاملاً وتريد اعتماده؟",cancel:"هل تريد إلغاء هذه المهمة؟",retry:"هل تريد إعادة المهمة الفاشلة إلى الطابور؟ لن يبدأ تشغيلها تلقائياً."};
+  if(!confirm(prompts[action]))return;
+  btn.disabled=true;const {data:{session}}=await sb.auth.getSession();
+  const response=await fetch("/api/ai-tasks",{method:"PATCH",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({task_id:id,action})});
+  const result=await response.json();
+  if(!response.ok){message(result.error||"تعذر تنفيذ الإجراء.",true);await load();return}
+  message("تم تحديث المهمة عبر واجهة الإدارة الآمنة.");await load()
+ });
+}
 $("taskForm").addEventListener("submit",async e=>{e.preventDefault();const v=Object.fromEntries(new FormData(e.target)),{data:{session}}=await sb.auth.getSession();const response=await fetch("/api/ai-tasks",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+session.access_token},body:JSON.stringify({employee_id:v.employee_id,title:v.title,instructions:v.instructions||"حلّل المدخلات المتاحة وأعد تقريراً مع المخاطر والمعلومات الناقصة.",priority:v.priority,input_data:{source:"admin_cloud_ui"}})});const result=await response.json();if(!response.ok){message(result.error||"لم تُحفظ المهمة.",true);return}e.target.reset();$("modal").classList.remove("open");await load()});
 start();
 </script></body></html>
