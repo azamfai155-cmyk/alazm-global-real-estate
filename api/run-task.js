@@ -105,14 +105,19 @@ module.exports = async function handler(req, res) {
       else if (ai.status===404) message = "لم يعثر Gemini على النموذج المطلوب أو أن الوصول إليه غير متاح.";
       else if (ai.status===400) message = "رفض Gemini صيغة الطلب أو أحد إعداداته.";
       else if (ai.status===503) message = "خدمة Gemini مشغولة مؤقتاً. لم يتم استخدام مزود مدفوع.";
-      await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{
-        method:"PATCH",headers:supabaseServiceHeaders,
+      const failedUpdate = await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId)+"&status=eq.running",{
+        method:"PATCH",headers:{...supabaseServiceHeaders,Prefer:"return=representation"},
         body:JSON.stringify({status:"failed",error_message:message,completed_at:new Date().toISOString()})
       });
-      await fetch(base+"/rest/v1/ai_employee_runs",{
-        method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
-        body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:message+" HTTP "+ai.status})
-      });
+      if (!failedUpdate.ok) throw new Error("تعذر حفظ حالة فشل المهمة بعد رفض Gemini (HTTP "+failedUpdate.status+").");
+      try {
+        await fetch(base+"/rest/v1/ai_employee_runs",{
+          method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
+          body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:message+" HTTP "+ai.status})
+        });
+      } catch (logError) {
+        console.error("[ai-run-task] failure recorded but run log insert failed",{name:logError?.name||"Error",taskId});
+      }
       claimedTaskId = null;
       return json(res,ai.status===429 || ai.status===402 ? ai.status : 502,{error:message});
     }
@@ -124,14 +129,19 @@ module.exports = async function handler(req, res) {
     if (!output || output.length < 700 || finishReason !== "STOP") {
       stage = "التحقق من اكتمال تقرير Gemini";
       const diagnostic = "تقرير غير مكتمل: finishReason="+finishReason+"، عدد الأحرف="+output.length+". لم يُعتمد التقرير ولم يُسجل التشغيل كناجح.";
-      await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId),{
-        method:"PATCH",headers:supabaseServiceHeaders,
+      const failedUpdate = await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId)+"&status=eq.running",{
+        method:"PATCH",headers:{...supabaseServiceHeaders,Prefer:"return=representation"},
         body:JSON.stringify({status:"failed",result:{report:output,provider:"Google Gemini",model:MODEL,finish_reason:finishReason,output_chars:output.length,incomplete:true,requires_human_approval:false},error_message:diagnostic,completed_at:new Date().toISOString()})
       });
-      await fetch(base+"/rest/v1/ai_employee_runs",{
-        method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
-        body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:diagnostic})
-      });
+      if (!failedUpdate.ok) throw new Error("تعذر حفظ حالة التقرير غير المكتمل (HTTP "+failedUpdate.status+").");
+      try {
+        await fetch(base+"/rest/v1/ai_employee_runs",{
+          method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
+          body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:diagnostic})
+        });
+      } catch (logError) {
+        console.error("[ai-run-task] incomplete report recorded but run log insert failed",{name:logError?.name||"Error",taskId});
+      }
       claimedTaskId = null;
       return json(res,502,{error:diagnostic});
     }
