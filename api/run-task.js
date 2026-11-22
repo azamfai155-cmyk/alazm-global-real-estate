@@ -16,6 +16,8 @@ module.exports = async function handler(req, res) {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return json(res,503,{error:"إعدادات قاعدة البيانات غير مكتملة."});
   if (!SUPABASE_SERVICE_ROLE_KEY) return json(res,503,{error:"يلزم إعداد مفتاح الخادم السري SUPABASE_SERVICE_ROLE_KEY في Vercel قبل تشغيل المهام."});
   if (!GEMINI_API_KEY) return json(res,503,{error:"مفتاح Gemini غير مضبوط."});
+  // Fail closed: AI API calls stay disabled until the owner verifies that the configured key is restricted to a genuinely free quota with billing disabled.
+  if (process.env.GEMINI_FREE_TIER_CONFIRMED !== "true") return json(res,503,{error:"تشغيل الذكاء الاصطناعي متوقف احترازياً حتى يتم التحقق من أن استخدام Gemini مجاني بالكامل ولا يمكن أن يسبب أي رسوم."});
 
   const base = SUPABASE_URL.replace(/\/$/,"");
   const userHeaders = {apikey:SUPABASE_ANON_KEY,Authorization:auth,"Content-Type":"application/json"};
