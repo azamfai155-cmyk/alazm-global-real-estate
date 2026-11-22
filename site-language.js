@@ -21,7 +21,7 @@ function mountPicker(){
 }
 function notice(message){let el=document.getElementById("azm-translation-note");if(!el){el=document.createElement("div");el.id="azm-translation-note";el.style.cssText="position:fixed;z-index:99998;inset-block-end:10px;inset-inline:10px;margin:auto;max-width:680px;background:#fff8df;color:#473919;border:1px solid #d6bd76;border-radius:9px;padding:8px 12px;font:12px/1.5 Arial,sans-serif;box-shadow:0 2px 10px #0002";document.body.appendChild(el)}el.textContent=message}
 mountPicker();document.documentElement.lang=lang;document.documentElement.dir=RTL.has(lang)?"rtl":"ltr";
-if(lang==="en")return;
+if(lang==="en"||lang==="ar")return;
 notice("ترجمة آلية تجريبية للمحتوى الثابت فقط. قد تبقى أجزاء دون ترجمة؛ النسخة الإنجليزية هي المرجع. لا تُرسل بيانات النماذج إلى خدمة الترجمة.");
 const cacheKey="azm_mt_cache_v1",usageKey="azm_mt_usage_v1";let cache={};try{cache=JSON.parse(localStorage.getItem(cacheKey)||"{}")}catch(e){}
 let usage={date:"",chars:0};try{usage=JSON.parse(localStorage.getItem(usageKey)||"{}")}catch(e){}
