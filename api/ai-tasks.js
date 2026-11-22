@@ -1,7 +1,9 @@
-const json=(res,status,body)=>res.status(status).setHeader("Content-Type","application/json").json(body);
+const json=(res,status,body)=>res.status(status).setHeader("Content-Type","application/json").setHeader("Cache-Control","no-store").json(body);
 
 module.exports=async function handler(req,res){
   if(!["GET","POST","PATCH"].includes(req.method)) return json(res,405,{error:"Method not allowed"});
+  const contentLength=Number(req.headers["content-length"]||0);
+  if(Number.isFinite(contentLength)&&contentLength>16000) return json(res,413,{error:"حجم الطلب أكبر من الحد المسموح."});
   const auth=req.headers.authorization||"";
   if(!auth.startsWith("Bearer ")) return json(res,401,{error:"تسجيل الدخول مطلوب."});
   const url=(process.env.SUPABASE_URL||"https://latgmqklsszgictpuerp.supabase.co").replace(/\/$/,"");
@@ -33,12 +35,17 @@ module.exports=async function handler(req,res){
       const title=String(body.title||"").trim();
       const instructions=String(body.instructions||"").trim();
       if(!title||title.length>160||!instructions||instructions.length>4000) return json(res,400,{error:"أدخل عنواناً وتعليمات، ضمن الحدود المسموحة."});
+      const inputData=body.input_data===undefined?{}:body.input_data;
+      if(!inputData||typeof inputData!=="object"||Array.isArray(inputData)) return json(res,400,{error:"بيانات المهمة يجب أن تكون كائناً صالحاً."});
+      let inputDataText;
+      try{inputDataText=JSON.stringify(inputData);}catch(_){return json(res,400,{error:"تعذر قراءة بيانات المهمة."});}
+      if(inputDataText.length>8000) return json(res,413,{error:"بيانات المهمة كبيرة جداً؛ الحد 8000 حرف."});
       const employeeId=String(body.employee_id||"ceo");
       const er=await fetch(url+"/rest/v1/ai_employees?id=eq."+encodeURIComponent(employeeId)+"&select=id,enabled",{headers:serverHeaders});
       const ea=await er.json(),employee=Array.isArray(ea)?ea[0]:null;
       if(!er.ok||!employee||!employee.enabled) return json(res,409,{error:"الموظف غير موجود أو غير مفعّل."});
       const priority=["low","normal","high","urgent"].includes(body.priority)?body.priority:"normal";
-      const cr=await fetch(url+"/rest/v1/ai_employee_tasks",{method:"POST",headers:{...serverHeaders,Prefer:"return=representation"},body:JSON.stringify({employee_id:employeeId,title,instructions,input_data:body.input_data&&typeof body.input_data==="object"?body.input_data:{},priority,status:"queued",created_by:user.id})});
+      const cr=await fetch(url+"/rest/v1/ai_employee_tasks",{method:"POST",headers:{...serverHeaders,Prefer:"return=representation"},body:JSON.stringify({employee_id:employeeId,title,instructions,input_data:inputData,priority,status:"queued",created_by:user.id})});
       const created=await cr.json();
       if(!cr.ok) return json(res,502,{error:"تعذر إنشاء المهمة."});
       return json(res,201,{task:Array.isArray(created)?created[0]:created});
