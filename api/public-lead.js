@@ -69,6 +69,8 @@ module.exports = async function handler(req, res) {
   if (budget) detailParts.push("الميزانية التقريبية: " + budget);
   if (contactTime) detailParts.push("وقت التواصل: " + contactTime);
   if (details) detailParts.push("تفاصيل العميل: " + details);
+  detailParts.push("موافقة سياسة الخصوصية: v1");
+  detailParts.push("موافقة مشاركة المعلومات الضرورية مع الطرف العقاري المخوّل: نعم");
 
   const serviceUrl = String(process.env.SUPABASE_URL || "https://latgmqklsszgictpuerp.supabase.co").replace(/\/$/, "");
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
