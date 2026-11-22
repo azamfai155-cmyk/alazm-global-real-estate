@@ -100,13 +100,13 @@ footer{background:#071812;color:#dce7e0;padding:25px 0;font-size:12px}.foot{disp
 <section class="contact"><div class="wrap"><div class="head"><div class="kicker">تواصل معنا</div><h2>العزم العالمية للعقارات</h2><p>للاستفسارات العامة والتعاون والشراكات.</p></div><div class="contact-box"><div><h3>يسعدنا تواصلك</h3><p dir="ltr">WhatsApp: +967 711 273 188</p><p>نخدم الاستفسارات الدولية؛ يرجى ذكر الدولة والمدينة ومفتاح الاتصال الدولي ونوع الخدمة المطلوبة.</p></div><a class="btn gold" href="https://wa.me/967711273188" target="_blank" rel="noopener noreferrer">فتح واتساب</a></div></div></section>
 </main>
 <footer><div class="wrap"><div class="foot"><strong>العزم العالمية للعقارات</strong><span>© <span id="year"></span> AL AZM GLOBAL REAL ESTATE</span></div><p class="notice">تنويه قانوني: هذه الصفحة التعريفية لا تمثل بحد ذاتها ترخيصاً لممارسة الوساطة أو التسويق العقاري. تخضع الخدمات والتعاملات للقوانين والتراخيص المعمول بها في كل دولة. لا توجد عقارات معروضة حالياً على هذا الموقع. يجب التحقق من بيانات العقار وصفة المعلن والمستندات قبل أي دفع أو توقيع. إرسال النموذج يحفظ طلب التواصل ولا يعني إبرام عقد أو قبول طلب. <a href="privacy.html">سياسة الخصوصية</a>.</p></div></footer>
+<script src="global-directory.js"></script>
 <script>
 (function(){
 const menu=document.getElementById('menuBtn'),nav=document.getElementById('navLinks');
 menu.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
 nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');menu.setAttribute('aria-expanded','false');}));
 document.getElementById('year').textContent=new Date().getFullYear();
-const languageCodes="af,am,ar,as,az,be,bg,bn,bs,ca,ceb,co,cs,cy,da,de,el,en,eo,es,et,eu,fa,fi,fil,fj,fr,fy,ga,gd,gl,gu,ha,haw,he,hi,hmn,hr,ht,hu,hy,id,ig,is,it,ja,jv,ka,kk,km,kn,ko,ku,ky,la,lb,lo,lt,lv,mg,mi,mk,ml,mn,mr,ms,mt,my,ne,nl,no,ny,om,or,pa,pl,ps,pt,ro,ru,rw,sd,si,sk,sl,sm,sn,so,sq,sr,su,sv,sw,ta,te,tg,th,tk,tl,to,tr,tt,ug,uk,ur,uz,vi,xh,yi,yo,zh,zu,zh-Hant,yue".split(",");const languageSelect=document.getElementById("preferredLanguage");const languageNames=new Intl.DisplayNames([navigator.language||"en"],{type:"language"});languageSelect.innerHTML=languageCodes.map(code=>'<option value="'+code+'">'+languageNames.of(code)+" ("+code+")</option>").join("");languageSelect.value=languageCodes.includes((navigator.language||"ar").split("-")[0])?(navigator.language||"ar").split("-")[0]:"ar";
 const requestForm=document.getElementById('requestForm');
 requestForm.addEventListener('submit',async function(e){
 e.preventDefault();if(!this.reportValidity())return;
