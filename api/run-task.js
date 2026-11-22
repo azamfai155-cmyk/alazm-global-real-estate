@@ -109,7 +109,9 @@ module.exports = async function handler(req, res) {
         method:"PATCH",headers:{...supabaseServiceHeaders,Prefer:"return=representation"},
         body:JSON.stringify({status:"failed",error_message:message,completed_at:new Date().toISOString()})
       });
-      if (!failedUpdate.ok) throw new Error("تعذر حفظ حالة فشل المهمة بعد رفض Gemini (HTTP "+failedUpdate.status+").");
+      const failedRows = failedUpdate.ok ? await failedUpdate.json() : null;
+      if (!failedUpdate.ok || !Array.isArray(failedRows) || failedRows.length !== 1)
+        throw new Error("تعذر تثبيت حالة فشل المهمة بعد رفض Gemini (HTTP "+failedUpdate.status+").");
       try {
         await fetch(base+"/rest/v1/ai_employee_runs",{
           method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
@@ -133,7 +135,9 @@ module.exports = async function handler(req, res) {
         method:"PATCH",headers:{...supabaseServiceHeaders,Prefer:"return=representation"},
         body:JSON.stringify({status:"failed",result:{report:output,provider:"Google Gemini",model:MODEL,finish_reason:finishReason,output_chars:output.length,incomplete:true,requires_human_approval:false},error_message:diagnostic,completed_at:new Date().toISOString()})
       });
-      if (!failedUpdate.ok) throw new Error("تعذر حفظ حالة التقرير غير المكتمل (HTTP "+failedUpdate.status+").");
+      const failedRows = failedUpdate.ok ? await failedUpdate.json() : null;
+      if (!failedUpdate.ok || !Array.isArray(failedRows) || failedRows.length !== 1)
+        throw new Error("تعذر تثبيت حالة التقرير غير المكتمل (HTTP "+failedUpdate.status+").");
       try {
         await fetch(base+"/rest/v1/ai_employee_runs",{
           method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
