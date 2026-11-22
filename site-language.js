@@ -11,6 +11,22 @@ let lang=(query.get("lang")||pathLocale||document.documentElement.lang||"en").to
 if(!LANGS.includes(lang))lang="en";
 if(pathLocale&&["es","fr","tr","ur"].includes(pathLocale)&&!query.has("lang")){location.replace("/en/"+(pagePath||"")+"?lang="+pathLocale);return}
 function targetUrl(code){if(code==="ar")return(pagePath?"/"+pagePath:"/")+"?lang=ar";return"/en/"+(pagePath||"")+"?lang="+encodeURIComponent(code)}
+function populatePreferredLanguage(){
+ const field=document.getElementById("preferredLanguage");
+ if(!field||field.dataset.languageOptionsReady==="true")return;
+ const selected=LANGS.includes(lang)?lang:"ar";
+ let labels;
+ try{labels=new Intl.DisplayNames([lang],{type:"language"})}catch(e){labels=names}
+ field.replaceChildren();
+ LANGS.forEach(code=>{
+  const option=document.createElement("option");
+  option.value=code;
+  option.textContent=(labels&&labels.of(code))||code;
+  option.selected=code===selected;
+  field.appendChild(option);
+ });
+ field.dataset.languageOptionsReady="true";
+}
 function mountPicker(){
  const wrap=document.createElement("label");wrap.id="azm-language-picker";wrap.setAttribute("aria-label","Choose language");
  wrap.style.cssText="position:fixed;z-index:99999;inset-block-start:10px;inset-inline-end:10px;background:#10251f;color:#fff;padding:7px 10px;border:1px solid #c9a66b;border-radius:10px;box-shadow:0 2px 12px #0003;font:12px Arial,sans-serif;display:flex;align-items:center;gap:7px";
@@ -20,7 +36,7 @@ function mountPicker(){
  select.addEventListener("change",()=>location.href=targetUrl(select.value));wrap.append(caption,select);document.body.appendChild(wrap);
 }
 function notice(message){let el=document.getElementById("azm-translation-note");if(!el){el=document.createElement("div");el.id="azm-translation-note";el.style.cssText="position:fixed;z-index:99998;inset-block-end:10px;inset-inline:10px;margin:auto;max-width:680px;background:#fff8df;color:#473919;border:1px solid #d6bd76;border-radius:9px;padding:8px 12px;font:12px/1.5 Arial,sans-serif;box-shadow:0 2px 10px #0002";document.body.appendChild(el)}el.textContent=message}
-mountPicker();document.documentElement.lang=lang;document.documentElement.dir=RTL.has(lang)?"rtl":"ltr";
+mountPicker();populatePreferredLanguage();document.documentElement.lang=lang;document.documentElement.dir=RTL.has(lang)?"rtl":"ltr";
 if(lang==="en"||lang==="ar")return;
 notice("تتم الترجمة آلياً مع حفظ الترجمات الناجحة في قاعدة بيانات الشركة. قد تتأخر بعض اللغات أو تبقى نصوص غير مدعومة بلغتها الأصلية. لا تُرسل بيانات النماذج.");
 const cacheKey="azm_mt_cache_v2";let cache={};try{cache=JSON.parse(localStorage.getItem(cacheKey)||"{}")}catch(e){}
