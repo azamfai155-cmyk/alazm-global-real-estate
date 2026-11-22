@@ -30,8 +30,7 @@ module.exports = async function handler(req, res) {
     "alazm-global-real-estate.vercel.app",
     "alazm-global-real-estate-azamfai155-cmyk.vercel.app",
     "alazm-global-real-estate-git-main-azamfai155-cmyk.vercel.app",
-    String(process.env.VERCEL_PROJECT_PRODUCTION_URL || "").toLowerCase(),
-    String(process.env.VERCEL_URL || "").toLowerCase()
+    String(process.env.VERCEL_PROJECT_PRODUCTION_URL || "").toLowerCase()
   ].filter(Boolean));
   if (!origin || !origin.startsWith("https://") || !allowedHosts.has(originHost)) {
     return json(res, 403, { error: "مصدر الطلب غير مسموح." });
