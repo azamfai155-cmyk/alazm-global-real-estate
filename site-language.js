@@ -45,7 +45,24 @@ let translatedCount=0,failedCount=0,busy=false,pending=[],pausedUntil=0,retryTim
 function hasSupportedSourceText(s){return /[A-Za-z\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(s)}
 function sourceLanguage(s){const arabic=(s.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/g)||[]).length;const latin=(s.match(/[A-Za-z]/g)||[]).length;return arabic>latin?"ar":"en"}
 function eligible(node){const p=node.parentElement;if(!p||skipTags.has(p.tagName)||p.closest("#azm-language-picker,#azm-translation-note,script,style,textarea,input,select#preferredLanguage,code,pre"))return false;const s=node.nodeValue.trim();return s.length>1&&hasSupportedSourceText(s)&&sourceLanguage(s)!==lang}
-function chunks(s,max){const out=[];let rest=s;while(rest.length>max){let cut=rest.lastIndexOf(" ",max);if(cut<max*.55)cut=max;out.push(rest.slice(0,cut));rest=rest.slice(cut)}if(rest)out.push(rest);return out}
+const utf8Encoder=new TextEncoder();
+function utf8Bytes(s){return utf8Encoder.encode(s).length}
+function chunks(s,maxBytes){
+ const out=[];let current="",bytes=0,lastSpace=-1;
+ for(const ch of s){
+  const size=utf8Bytes(ch);
+  if(bytes+size>maxBytes&&current){
+   const cut=lastSpace>0?lastSpace:current.length;
+   out.push(current.slice(0,cut));
+   current=current.slice(cut);bytes=utf8Bytes(current);lastSpace=-1;
+   for(let i=0;i<current.length;i++)if(/\\s/.test(current[i]))lastSpace=i+1;
+  }
+  current+=ch;bytes+=size;
+  if(/\\s/.test(ch))lastSpace=current.length;
+ }
+ if(current)out.push(current);
+ return out;
+}
 async function waitForProviderSlot(){
  const wait=Math.max(0,nextRequestAt-Date.now());
  if(wait)await new Promise(resolve=>setTimeout(resolve,wait));
@@ -88,7 +105,7 @@ function scheduleRetry(){
 }
 async function translateNode(node){
  if(!node.isConnected||processed.has(node)||!eligible(node))return;
- processed.add(node);const original=node.nodeValue,pieces=chunks(original,430),results=[];
+ processed.add(node);const original=node.nodeValue,pieces=chunks(original,450),results=[];
  try{for(const piece of pieces)results.push(await translateChunk(piece,sourceLanguage(piece)));node.nodeValue=results.join("");translatedCount++}
  catch(e){failedCount++;processed.delete(node);if(e.throttled){pending.unshift(node);scheduleRetry()}}
 }
@@ -108,7 +125,7 @@ async function drain(){
   notice("مزود الترجمة فرض حداً مؤقتاً. تم الاحتفاظ ببقية النصوص في قائمة الانتظار، وستستأنف الترجمة تلقائياً بعد انتهاء فترة الانتظار. الترجمات المحفوظة تبقى متاحة.");
   return;
  }
- notice("اكتملت معالجة النصوص المتاحة. تمت ترجمة "+translatedCount+" مقطعاً، مع حفظ الترجمات الناجحة مركزياً. راجع النصوص القانونية قبل الاعتماد عليها.");
+ notice("انتهت محاولة الترجمة. تمت ترجمة "+translatedCount+" مقطعاً؛ وتعذر ترجمة "+failedCount+" مقطعاً بسبب حدود مزود الترجمة أو عدم دعم زوج اللغات. الترجمات الناجحة محفوظة مركزياً.");
 }
 function enqueue(node){if(node&&node.nodeType===Node.TEXT_NODE){pending.push(node);drain()}else if(node&&node.nodeType===Node.ELEMENT_NODE){const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);while(walker.nextNode())if(eligible(walker.currentNode))pending.push(walker.currentNode);drain()}}
 function scan(){enqueue(document.body);if(document.title&&hasSupportedSourceText(document.title)&&sourceLanguage(document.title)!==lang){translateChunk(document.title,sourceLanguage(document.title)).then(t=>{document.title=t}).catch(()=>{})}}
