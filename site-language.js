@@ -41,37 +41,72 @@ if(lang==="en"||lang==="ar")return;
 notice("تتم الترجمة آلياً مع حفظ الترجمات الناجحة في قاعدة بيانات الشركة. قد تتأخر بعض اللغات أو تبقى نصوص غير مدعومة بلغتها الأصلية. لا تُرسل بيانات النماذج.");
 const cacheKey="azm_mt_cache_v2";let cache={};try{cache=JSON.parse(localStorage.getItem(cacheKey)||"{}")}catch(e){}
 const processed=new WeakSet(),skipTags=new Set(["SCRIPT","STYLE","NOSCRIPT","TEXTAREA","INPUT","SELECT","SVG","CODE","PRE"]);
-let translatedCount=0,failedCount=0,busy=false,pending=[],providerThrottled=false;
+let translatedCount=0,failedCount=0,busy=false,pending=[],pausedUntil=0,retryTimer=null,nextRequestAt=0,backoffMs=60000;
 function eligible(node){const p=node.parentElement;if(!p||skipTags.has(p.tagName)||p.closest("#azm-language-picker,#azm-translation-note,script,style,textarea,input,select#preferredLanguage,code,pre"))return false;const s=node.nodeValue.trim();return s.length>1&&/[A-Za-z]/.test(s)}
 function chunks(s,max){const out=[];let rest=s;while(rest.length>max){let cut=rest.lastIndexOf(" ",max);if(cut<max*.55)cut=max;out.push(rest.slice(0,cut));rest=rest.slice(cut)}if(rest)out.push(rest);return out}
+async function waitForProviderSlot(){
+ const wait=Math.max(0,nextRequestAt-Date.now());
+ if(wait)await new Promise(resolve=>setTimeout(resolve,wait));
+ nextRequestAt=Date.now()+2000;
+}
 async function translateChunk(s){
  const key=lang+"|"+s;if(cache[key])return cache[key];
- if(providerThrottled){const e=new Error("provider_throttled");e.throttled=true;throw e}
+ if(Date.now()<pausedUntil){const e=new Error("provider_throttled");e.throttled=true;throw e}
  let lastError;
  for(let attempt=0;attempt<3;attempt++){
   try{
+   await waitForProviderSlot();
    const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","apikey":(window.AL_AZM_SUPABASE&&window.AL_AZM_SUPABASE.publishableKey)||""},body:JSON.stringify({text:s,target:lang})});
    const data=await response.json();
-   if(response.ok&&data.translated){cache[key]=data.translated;try{localStorage.setItem(cacheKey,JSON.stringify(cache))}catch(e){}return data.translated}
-   if(response.status===429){const e=new Error(data.error||"provider_throttled");e.throttled=true;throw e}
+   if(response.ok&&data.translated){
+    cache[key]=data.translated;
+    try{localStorage.setItem(cacheKey,JSON.stringify(cache))}catch(e){}
+    backoffMs=60000;
+    return data.translated;
+   }
+   if(response.status===429){
+    pausedUntil=Date.now()+backoffMs;
+    backoffMs=Math.min(backoffMs*2,1800000);
+    const e=new Error(data.error||"provider_throttled");e.throttled=true;throw e;
+   }
    if(!data.retryable)throw new Error(data.error||"translation_unavailable");
    lastError=new Error(data.error||"temporary_translation_error");
-  }catch(e){lastError=e;if(e.throttled){providerThrottled=true;throw e}}
+  }catch(e){
+   if(e.throttled)throw e;
+   lastError=e;
+  }
   if(attempt<2)await new Promise(resolve=>setTimeout(resolve,700*(attempt+1)));
  }
  throw lastError||new Error("translation_unavailable");
+}
+function scheduleRetry(){
+ if(retryTimer!==null)return;
+ const wait=Math.max(1000,pausedUntil-Date.now());
+ retryTimer=setTimeout(()=>{retryTimer=null;drain()},wait);
 }
 async function translateNode(node){
  if(!node.isConnected||processed.has(node)||!eligible(node))return;
  processed.add(node);const original=node.nodeValue,pieces=chunks(original,430),results=[];
  try{for(const piece of pieces)results.push(await translateChunk(piece));node.nodeValue=results.join("");translatedCount++}
- catch(e){failedCount++;if(e.throttled)providerThrottled=true;processed.delete(node)}
+ catch(e){failedCount++;processed.delete(node);if(e.throttled){pending.unshift(node);scheduleRetry()}}
 }
 async function drain(){
- if(busy)return;busy=true;
- while(pending.length){if(providerThrottled){pending.length=0;break}const node=pending.shift();await translateNode(node)}
+ if(busy)return;
+ if(Date.now()<pausedUntil){scheduleRetry();return}
+ busy=true;
+ while(pending.length){
+  if(Date.now()<pausedUntil)break;
+  const node=pending.shift();
+  await translateNode(node);
+  if(Date.now()<pausedUntil)break;
+ }
  busy=false;
- notice(providerThrottled?"تم إيقاف طلبات الترجمة مؤقتاً لأن مزود الخدمة فرض حداً للطلبات. ستبقى النصوص غير المترجمة بلغتها الأصلية، وستظل الترجمات المحفوظة متاحة.":("تمت ترجمة "+translatedCount+" مقطعاً وحفظ الترجمات الناجحة مركزياً. "+(failedCount?"تعذر مؤقتاً ترجمة "+failedCount+" مقطعاً؛ ستعاد المحاولة عند ظهور المحتوى مجدداً.":"النصوص الجديدة تُعالج تلقائياً.")+" راجع النصوص القانونية قبل الاعتماد عليها."));
+ if(pending.length){
+  scheduleRetry();
+  notice("مزود الترجمة فرض حداً مؤقتاً. تم الاحتفاظ ببقية النصوص في قائمة الانتظار، وستستأنف الترجمة تلقائياً بعد انتهاء فترة الانتظار. الترجمات المحفوظة تبقى متاحة.");
+  return;
+ }
+ notice("اكتملت معالجة النصوص المتاحة. تمت ترجمة "+translatedCount+" مقطعاً، مع حفظ الترجمات الناجحة مركزياً. راجع النصوص القانونية قبل الاعتماد عليها.");
 }
 function enqueue(node){if(node&&node.nodeType===Node.TEXT_NODE){pending.push(node);drain()}else if(node&&node.nodeType===Node.ELEMENT_NODE){const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);while(walker.nextNode())if(eligible(walker.currentNode))pending.push(walker.currentNode);drain()}}
 function scan(){enqueue(document.body);if(document.title&&/[A-Za-z]/.test(document.title)){translateChunk(document.title).then(t=>{document.title=t}).catch(()=>{})}}
