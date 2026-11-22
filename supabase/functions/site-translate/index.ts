@@ -12,8 +12,8 @@ const headers = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Vary": "Origin",
 };
-const reply = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { ...headers, "Content-Type": "application/json" } });
+const reply = (body: unknown, status = 200, extraHeaders: Record<string, string> = {}) =>
+  new Response(JSON.stringify(body), { status, headers: { ...headers, ...extraHeaders, "Content-Type": "application/json" } });
 
 async function sha256(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
@@ -33,6 +33,18 @@ Deno.serve(async (req) => {
   const sourceLang = body.source === undefined ? "en" : (body.source === "ar" || body.source === "en" ? body.source : "");
   if (!source || source.length > 430 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
     return reply({ error: "invalid_input" }, 400);
+  }
+
+  const clientIp = req.headers.get("cf-connecting-ip") || req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() || "";
+  if (!clientIp) return reply({ error: "client_ip_unavailable", retryable: true }, 503);
+  const ipHash = await sha256(clientIp + ":" + SERVICE_ROLE_KEY);
+  const { data: rateAllowed, error: rateError } = await supabase.rpc("allow_site_translation", {
+    p_ip_hash: ipHash,
+  });
+  if (rateError) return reply({ error: "rate_limit_unavailable", retryable: true }, 503);
+  if (rateAllowed !== true) {
+    return reply({ error: "rate_limited", retryable: true }, 429, { "Retry-After": "60" });
   }
 
   const sourceHash = await sha256(source);
