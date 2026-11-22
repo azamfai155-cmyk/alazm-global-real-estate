@@ -60,12 +60,17 @@ module.exports = async function handler(req, res) {
   if (!kind) return json(res, 400, { error: "نوع الطلب غير صالح." });
   if (body.consent !== true) return json(res, 400, { error: "يجب الموافقة على حفظ البيانات والتواصل بشأن الطلب." });
 
+  const assetCategory = clean(body.assetCategory, 30) || "real_estate";
+  if (!["real_estate","shop","car","motorcycle","other"].includes(assetCategory)) return json(res, 400, { error: "فئة العرض غير صالحة." });
+  const preferredLanguage = clean(body.preferredLanguage, 20) || "ar";
+  if (!/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})?$/.test(preferredLanguage)) return json(res, 400, { error: "رمز لغة التواصل غير صالح." });
   const propertyType = clean(body.propertyType, 70);
   const budget = clean(body.budget, 70);
   const contactTime = clean(body.time, 30);
   const details = clean(body.details, 700);
   const detailParts = [];
-  if (propertyType) detailParts.push("نوع العقار: " + propertyType);
+  if (propertyType) detailParts.push("النوع أو الموديل: " + propertyType);
+  detailParts.push("لغة التواصل المفضلة: " + preferredLanguage);
   if (budget) detailParts.push("الميزانية التقريبية: " + budget);
   if (contactTime) detailParts.push("وقت التواصل: " + contactTime);
   if (details) detailParts.push("تفاصيل العميل: " + details);
@@ -88,6 +93,8 @@ module.exports = async function handler(req, res) {
         full_name,
         phone,
         kind,
+        asset_category: assetCategory,
+        preferred_language: preferredLanguage,
         country,
         city,
         details: detailParts.join("\n").slice(0, 1600) || null,
