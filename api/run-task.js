@@ -77,7 +77,8 @@ module.exports = async function handler(req, res) {
     stage = "الاتصال بمحرك Gemini";
     const ai = await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent?key="+encodeURIComponent(GEMINI_API_KEY),{
       method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:4096,temperature:0.2}})
+      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:4096,temperature:0.2}}),
+      signal:AbortSignal.timeout(120_000)
     });
     const data = await ai.json();
 
