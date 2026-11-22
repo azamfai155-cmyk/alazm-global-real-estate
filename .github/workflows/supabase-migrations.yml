@@ -2,12 +2,6 @@ name: Supabase database migrations
 
 on:
   workflow_dispatch:
-    inputs:
-      baseline_existing_schema:
-        description: "Mark the existing initial schema migration as already applied (first run only)"
-        required: true
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -36,7 +30,7 @@ jobs:
           supabase link --project-ref "$SUPABASE_PROJECT_ID" --password "$SUPABASE_DB_PASSWORD"
 
       # Build the pooler URL from the same database password already used by
-      # 'supabase link'. Python URL-encodes special characters without logging the secret.
+      # 'supabase link'. URL-encode the password without printing it.
       - name: Build IPv4 session-pooler connection URL
         env:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
@@ -52,10 +46,9 @@ jobs:
               env_file.write(f"SUPABASE_DB_URL={url}\n")
           PY
 
-      - name: Baseline existing initial schema (first run only)
-        if: inputs.baseline_existing_schema
+      - name: Verify remote migration history
         run: |
-          supabase migration repair 202611190001 --status applied --db-url="$SUPABASE_DB_URL"
+          supabase migration list --db-url="$SUPABASE_DB_URL"
 
       - name: Apply pending migrations via IPv4 session pooler
         run: |
