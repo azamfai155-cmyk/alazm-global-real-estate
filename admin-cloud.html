@@ -191,7 +191,7 @@ async function loadAITasks(){
   $("aiTaskRows").innerHTML=d.tasks.map(t=>{
    const result=t.result?.report||t.error_message||"—";
    let actions="";
-   if(t.status==="queued") actions+='<button class="btn gold" data-ai-run="'+esc(t.id)+'">تشغيل</button> ';
+   if(t.status==="queued"&&d.ai_execution_enabled) actions+='<button class="btn gold" data-ai-run="'+esc(t.id)+'">تشغيل</button> '; else if(t.status==="queued") actions+='<button class="btn light" type="button" disabled title="لن يتم الاتصال بمحرك الذكاء الاصطناعي قبل تأكيد أن الاستخدام مجاني">متوقف حتى التحقق المجاني</button> ';
    if(canReviewTasks&&t.status==="needs_review") actions+='<button class="btn gold" data-ai-approve="'+esc(t.id)+'">اعتماد النتيجة</button> ';
    if(canReviewTasks&&["queued","needs_review","failed"].includes(t.status)) actions+='<button class="btn light" data-ai-cancel="'+esc(t.id)+'">إلغاء</button> ';
    if(canReviewTasks&&t.status==="failed") actions+='<button class="btn light" data-ai-retry="'+esc(t.id)+'">إعادة للانتظار</button> ';
