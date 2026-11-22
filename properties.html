@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="تصفح العقارات المنشورة والمعتمدة لدى العزم العالمية للعقارات وابحث حسب الدولة والمدينة ونوع العقار.">
+<meta name="robots" content="index,follow">
+<title>العقارات المتاحة | العزم العالمية للعقارات</title>
+<style>
+:root{--ink:#172b24;--muted:#68776f;--green:#12372c;--gold:#c9a66b;--line:#e0e7e1;--paper:#f4f7f4}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.8 Tahoma,Arial,sans-serif}
+header{background:#0d251e;color:#fff;padding:18px 4%}.nav{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}.brand{font-weight:700;color:#fff;text-decoration:none}.brand small{display:block;color:#d9bd8d;font-size:10px;letter-spacing:1px}
+.nav a.link{color:#fff;text-decoration:none;border:1px solid #ffffff40;border-radius:8px;padding:7px 12px}
+main{max-width:1200px;margin:28px auto;padding:0 18px}.intro{margin-bottom:20px}.intro h1{font-size:28px;margin:0 0 8px;color:var(--green)}.intro p{color:var(--muted);margin:0}
+.filters,.status,.card{background:#fff;border:1px solid var(--line);border-radius:14px}.filters{padding:16px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:18px 0}
+.field{display:grid;gap:4px}.field label{font-size:12px;font-weight:700;color:var(--muted)}input,select{width:100%;min-width:0;padding:10px;border:1px solid #d5ded7;border-radius:8px;background:#fff;color:var(--ink);font:inherit}
+.actions{display:flex;gap:8px;align-items:end}.btn{border:0;border-radius:8px;padding:10px 14px;background:var(--green);color:#fff;cursor:pointer;font:inherit;text-decoration:none;display:inline-block}.btn.gold{background:var(--gold);color:#1d2b23}.btn:disabled{opacity:.6;cursor:wait}
+.status{padding:12px 15px;margin:14px 0;color:var(--muted)}.status.error{color:#8b2d26;background:#fff4f2;border-color:#efc7c1}
+.results-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 10px}.results-head h2{font-size:18px;margin:0}.results-head span{font-size:12px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{padding:17px;display:flex;flex-direction:column;gap:8px;min-width:0}.card h3{font-size:17px;line-height:1.5;margin:0;color:var(--green)}.meta{display:flex;gap:6px;flex-wrap:wrap}.tag{background:#eef3ef;color:#385348;padding:3px 8px;border-radius:20px;font-size:11px}.price{font-size:18px;font-weight:700;color:#805f2a}.desc{color:#596960;font-size:13px;white-space:pre-line;overflow-wrap:anywhere}.facts{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:auto;padding-top:8px;border-top:1px solid var(--line)}
+.empty{padding:28px;text-align:center;border:1px dashed #b8c7bd;border-radius:14px;background:#fff;color:var(--muted)}.empty h3{margin:0 0 6px;color:var(--green)}
+footer{max-width:1200px;margin:28px auto;padding:16px 18px 32px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}footer a{color:var(--green)}
+@media(max-width:900px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){main{padding:0 12px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.intro h1{font-size:23px}.actions{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header><div class="nav"><a class="brand" href="/">العزم العالمية للعقارات<small>AL AZM GLOBAL REAL ESTATE</small></a><div><a class="link" href="/">الرئيسية</a> <a class="link" href="/#request">أرسل طلباً</a></div></div></header>
+<main>
+<section class="intro"><h1>العقارات المتاحة</h1><p>يعرض هذا الدليل العقارات التي اجتازت المراجعة وتم اعتماد نشرها فقط. لا تظهر المسودات أو الإعلانات غير المصرح بها.</p></section>
+<form class="filters" id="filters">
+<div class="field"><label for="q">بحث عام</label><input id="q" placeholder="اسم العقار أو وصفه"></div>
+<div class="field"><label for="country">الدولة</label><input id="country" placeholder="الدولة"></div>
+<div class="field"><label for="city">المدينة</label><input id="city" placeholder="المدينة"></div>
+<div class="field"><label for="propertyType">نوع العقار</label><select id="propertyType"><option value="">كل الأنواع</option><option>شقة</option><option>فيلا</option><option>أرض</option><option>مبنى تجاري</option><option>مكتب</option><option>مستودع</option><option>أخرى</option></select></div>
+<div class="field"><label for="listingKind">نوع العرض</label><select id="listingKind"><option value="">بيع أو إيجار</option><option value="sale">للبيع</option><option value="rent">للإيجار</option><option value="lease">تأجير تجاري</option></select></div>
+<div class="field"><label for="minPrice">السعر الأدنى</label><input id="minPrice" type="number" min="0" placeholder="اختياري"></div>
+<div class="field"><label for="maxPrice">السعر الأعلى</label><input id="maxPrice" type="number" min="0" placeholder="اختياري"></div>
+<div class="actions"><button class="btn gold" type="submit">بحث</button><button class="btn" type="button" id="clear">مسح</button></div>
+</form>
+<div class="status" id="status" role="status" aria-live="polite">جارٍ تحميل العقارات المنشورة...</div>
+<div class="results-head"><h2>النتائج</h2><span id="count">—</span></div>
+<section class="grid" id="results"></section>
+</main>
+<footer>© 2026 AL AZM GLOBAL REAL ESTATE · <a href="/privacy.html">سياسة الخصوصية</a> · <a href="/">الصفحة الرئيسية</a><p>تأكد من معاينة العقار والتحقق من بيانات المالك والمستندات قبل أي دفع أو توقيع. الأسعار والمعلومات قابلة للتغيير ويجب تأكيدها مع الشركة.</p></footer>
+<script src="/supabase-config.js"></script>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const cfg=window.AL_AZM_SUPABASE;
+const sb=createClient(cfg.url,cfg.publishableKey);
+const $=id=>document.getElementById(id);
+const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const listingLabels={sale:"للبيع",rent:"للإيجار",lease:"تأجير تجاري"};
+let all=[];
+function priceText(p,c){
+ if(p===null||p===undefined||p==="")return "السعر عند التواصل";
+ const n=Number(p);if(!Number.isFinite(n))return "السعر عند التواصل";
+ try{return new Intl.NumberFormat("en-US",{maximumFractionDigits:2}).format(n)+(c?" "+c:"");}
+ catch(_){return String(n)+(c?" "+c:"");}
+}
+function render(rows){
+ $("count").textContent=rows.length+" عقار";
+ if(!rows.length){
+  $("results").innerHTML='<div class="empty" style="grid-column:1/-1"><h3>لا توجد عقارات مطابقة حالياً</h3><p>لا توجد إعلانات منشورة متاحة بهذه المواصفات. أرسل طلبك وسيتابع الفريق الفرص المناسبة عند توفرها.</p><a class="btn gold" href="/#request">إرسال طلب عقاري</a></div>';
+  return;
+ }
+ $("results").innerHTML=rows.map(p=>{
+  const facts=[];
+  if(p.bedrooms!==null)facts.push("غرف: "+esc(p.bedrooms));
+  if(p.bathrooms!==null)facts.push("حمامات: "+esc(p.bathrooms));
+  if(p.area_sqm!==null)facts.push("المساحة: "+esc(p.area_sqm)+" م²");
+  const summary=String(p.description||"").slice(0,280);
+  const msg="أرغب بالاستفسار عن العقار: "+p.title+" - "+p.city+", "+p.country+" (رقم المرجع: "+p.id+")";
+  const wa="https://wa.me/967711273188?text="+encodeURIComponent(msg);
+  return '<article class="card"><div class="meta"><span class="tag">'+esc(listingLabels[p.listing_kind]||"عرض عقاري")+'</span><span class="tag">'+esc(p.property_type)+'</span></div><h3>'+esc(p.title)+'</h3><div class="muted">'+esc(p.city)+", "+esc(p.country)+'</div><div class="price">'+esc(priceText(p.price,p.currency))+'</div>'+(summary?'<p class="desc">'+esc(summary)+'</p>':'')+'<div class="facts">'+facts.join("")+'</div><a class="btn gold" href="'+esc(wa)+'" target="_blank" rel="noopener noreferrer">استفسر عبر واتساب</a></article>';
+ }).join("");
+}
+function apply(){
+ const q=$("q").value.trim().toLowerCase(),country=$("country").value.trim().toLowerCase(),city=$("city").value.trim().toLowerCase(),type=$("propertyType").value,kind=$("listingKind").value;
+ const min=$("minPrice").value===""?null:Number($("minPrice").value),max=$("maxPrice").value===""?null:Number($("maxPrice").value);
+ const rows=all.filter(p=>{
+  const hay=[p.title,p.description,p.country,p.city,p.property_type].join(" ").toLowerCase();
+  const price=p.price===null?null:Number(p.price);
+  return (!q||hay.includes(q))&&(!country||String(p.country).toLowerCase().includes(country))&&(!city||String(p.city).toLowerCase().includes(city))&&(!type||p.property_type===type)&&(!kind||p.listing_kind===kind)&&(min===null||(price!==null&&price>=min))&&(max===null||(price!==null&&price<=max));
+ });
+ render(rows);
+}
+async function load(){
+ $("status").textContent="جارٍ تحميل العقارات المنشورة...";
+ const {data,error}=await sb.from("properties").select("id,title,description,country,city,property_type,listing_kind,price,currency,bedrooms,bathrooms,area_sqm,published_at").eq("status","published").order("published_at",{ascending:false}).limit(100);
+ if(error){$("status").className="status error";$("status").textContent="تعذر تحميل العقارات حالياً. يرجى المحاولة لاحقاً.";return;}
+ all=data||[];$("status").className="status";$("status").textContent=all.length?"تم تحميل العقارات المنشورة فقط.":"لا توجد عقارات منشورة حتى الآن؛ لن تظهر العقارات قيد المراجعة هنا.";
+ apply();
+}
+$("filters").addEventListener("submit",e=>{e.preventDefault();apply();});
+$("clear").addEventListener("click",()=>{$("filters").reset();apply();});
+load();
+</script>
+</body>
+</html>
