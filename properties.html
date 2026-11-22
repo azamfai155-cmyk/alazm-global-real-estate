@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Explore verified and approved property listings from AL AZM GLOBAL REAL ESTATE across countries, cities and property types worldwide.">
+<meta name="description" content="Explore verified and approved real estate, shops, cars and motorcycles listings worldwide.">
 <meta name="robots" content="index,follow">
-<title>العقارات المتاحة | العزم العالمية للعقارات</title>
+<title>العروض المتاحة | العزم العالمية للعقارات</title>
 <style>
 :root{--ink:#172b24;--muted:#68776f;--green:#12372c;--gold:#c9a66b;--line:#e0e7e1;--paper:#f4f7f4}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.8 Tahoma,Arial,sans-serif}
@@ -62,9 +62,9 @@ function priceText(p,c){
  catch(_){return String(n)+(c?" "+c:"");}
 }
 function render(rows){
- $("count").textContent=rows.length+" عقار";
+ $("count").textContent=rows.length+" عرض";
  if(!rows.length){
-  $("results").innerHTML='<div class="empty" style="grid-column:1/-1"><h3>لا توجد عقارات مطابقة حالياً</h3><p>لا توجد إعلانات منشورة متاحة بهذه المواصفات. أرسل طلبك وسيتابع الفريق الفرص المناسبة عند توفرها.</p><a class="btn gold" href="/#request">إرسال طلب عقاري</a></div>';
+  $("results").innerHTML='<div class="empty" style="grid-column:1/-1"><h3>لا توجد عروض مطابقة حالياً</h3><p>لا توجد إعلانات منشورة متاحة بهذه المواصفات. أرسل طلبك وسيتابع الفريق الفرص المناسبة عند توفرها.</p><a class="btn gold" href="/#request">إرسال طلب عقاري</a></div>';
   return;
  }
  $("results").innerHTML=rows.map(p=>{
