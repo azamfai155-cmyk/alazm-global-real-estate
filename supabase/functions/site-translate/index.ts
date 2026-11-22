@@ -28,10 +28,13 @@ Deno.serve(async (req) => {
 
   let body: { text?: string; target?: string; source?: string };
   try { body = await req.json(); } catch { return reply({ error: "invalid_json" }, 400); }
-  const source = typeof body.text === "string" ? body.text.trim() : "";
+  const rawSource = typeof body.text === "string" ? body.text : "";
+  const source = rawSource.trim();
+  const leadingWhitespace = rawSource.slice(0, rawSource.length - rawSource.trimStart().length);
+  const trailingWhitespace = rawSource.slice(rawSource.trimEnd().length);
   const target = typeof body.target === "string" ? body.target.toLowerCase() : "";
   const sourceLang = body.source === undefined ? "en" : (body.source === "ar" || body.source === "en" ? body.source : "");
-  if (!source || new TextEncoder().encode(source).length > 450 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
+  if (!source || new TextEncoder().encode(rawSource).length > 450 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
     return reply({ error: "invalid_input" }, 400);
   }
 
@@ -47,7 +50,7 @@ Deno.serve(async (req) => {
     return reply({ error: "rate_limited", retryable: true }, 429, { "Retry-After": "60" });
   }
 
-  const sourceHash = await sha256(source);
+  const sourceHash = await sha256(rawSource);
   const { data: cached, error: cacheError } = await supabase
     .from("site_translation_cache")
     .select("translated_text")
@@ -103,11 +106,11 @@ Deno.serve(async (req) => {
     source_hash: sourceHash,
     source_lang: sourceLang,
     target_lang: target,
-    source_text: source,
+    source_text: rawSource,
     translated_text: translated,
     provider: "mymemory",
     updated_at: new Date().toISOString(),
   }, { onConflict: "source_hash,source_lang,target_lang" });
   if (insertError) return reply({ error: "cache_write_failed" }, 503);
-  return reply({ translated, cached: false });
+  return reply({ translated: leadingWhitespace + translated + trailingWhitespace, cached: false });
 });
