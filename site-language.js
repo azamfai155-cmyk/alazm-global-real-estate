@@ -42,8 +42,9 @@ notice("تتم الترجمة آلياً مع حفظ الترجمات الناج
 const cacheKey="azm_mt_cache_v3";let cache={};try{cache=JSON.parse(localStorage.getItem(cacheKey)||"{}")}catch(e){}
 const processed=new WeakSet(),skipTags=new Set(["SCRIPT","STYLE","NOSCRIPT","TEXTAREA","INPUT","SELECT","SVG","CODE","PRE"]);
 let translatedCount=0,failedCount=0,busy=false,pending=[],pausedUntil=0,retryTimer=null,nextRequestAt=0,backoffMs=60000;
+function hasSupportedSourceText(s){return /[A-Za-z\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/.test(s)}
 function sourceLanguage(s){const arabic=(s.match(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/g)||[]).length;const latin=(s.match(/[A-Za-z]/g)||[]).length;return arabic>latin?"ar":"en"}
-function eligible(node){const p=node.parentElement;if(!p||skipTags.has(p.tagName)||p.closest("#azm-language-picker,#azm-translation-note,script,style,textarea,input,select#preferredLanguage,code,pre"))return false;const s=node.nodeValue.trim();return s.length>1&&sourceLanguage(s)!==lang}
+function eligible(node){const p=node.parentElement;if(!p||skipTags.has(p.tagName)||p.closest("#azm-language-picker,#azm-translation-note,script,style,textarea,input,select#preferredLanguage,code,pre"))return false;const s=node.nodeValue.trim();return s.length>1&&hasSupportedSourceText(s)&&sourceLanguage(s)!==lang}
 function chunks(s,max){const out=[];let rest=s;while(rest.length>max){let cut=rest.lastIndexOf(" ",max);if(cut<max*.55)cut=max;out.push(rest.slice(0,cut));rest=rest.slice(cut)}if(rest)out.push(rest);return out}
 async function waitForProviderSlot(){
  const wait=Math.max(0,nextRequestAt-Date.now());
@@ -110,7 +111,7 @@ async function drain(){
  notice("اكتملت معالجة النصوص المتاحة. تمت ترجمة "+translatedCount+" مقطعاً، مع حفظ الترجمات الناجحة مركزياً. راجع النصوص القانونية قبل الاعتماد عليها.");
 }
 function enqueue(node){if(node&&node.nodeType===Node.TEXT_NODE){pending.push(node);drain()}else if(node&&node.nodeType===Node.ELEMENT_NODE){const walker=document.createTreeWalker(node,NodeFilter.SHOW_TEXT);while(walker.nextNode())if(eligible(walker.currentNode))pending.push(walker.currentNode);drain()}}
-function scan(){enqueue(document.body);if(document.title&&sourceLanguage(document.title)!==lang){translateChunk(document.title,sourceLanguage(document.title)).then(t=>{document.title=t}).catch(()=>{})}}
+function scan(){enqueue(document.body);if(document.title&&hasSupportedSourceText(document.title)&&sourceLanguage(document.title)!==lang){translateChunk(document.title,sourceLanguage(document.title)).then(t=>{document.title=t}).catch(()=>{})}}
 function observe(){const observer=new MutationObserver(records=>{for(const record of records){if(record.type==="characterData")enqueue(record.target);for(const added of record.addedNodes)enqueue(added)}});observer.observe(document.body,{subtree:true,childList:true,characterData:true})}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{scan();observe()},{once:true});else{scan();observe()}
 })();
