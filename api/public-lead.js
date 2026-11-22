@@ -1,5 +1,5 @@
 const json = (res, status, body) => res.status(status).setHeader("Content-Type", "application/json").setHeader("Cache-Control", "no-store").json(body);
-const recent = new Map();
+const crypto = require("crypto");
 const kinds = new Map([
   ["شراء عقار", "buy"],
   ["بيع عقار", "sell"],
@@ -39,15 +39,6 @@ module.exports = async function handler(req, res) {
   // Honeypot for basic bot filtering. Do not store bot submissions.
   if (clean(body.website, 120)) return json(res, 200, { ok: true });
 
-  const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim().slice(0, 80);
-  const now = Date.now();
-  const last = recent.get(ip) || 0;
-  if (now - last < 20000) return json(res, 429, { error: "انتظر قليلاً قبل إرسال طلب آخر." });
-  if (recent.size > 5000) {
-    for (const [key, time] of recent) if (now - time > 60000) recent.delete(key);
-  }
-  recent.set(ip, now);
-
   const full_name = clean(body.name, 80);
   const phone = clean(body.phone, 30);
   const country = clean(body.country, 70);
@@ -82,6 +73,25 @@ module.exports = async function handler(req, res) {
   if (!serviceKey) return json(res, 503, { error: "خدمة استقبال الطلبات غير مهيأة حالياً. حاول لاحقاً." });
 
   try {
+    const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim().slice(0, 80);
+    const rateSalt = process.env.LEAD_RATE_LIMIT_SALT || serviceKey;
+    const ipHash = crypto.createHash("sha256").update(rateSalt).update(":").update(ip).digest("hex");
+    const rateCheck = await fetch(serviceUrl + "/rest/v1/rpc/allow_public_lead_submission", {
+      method: "POST",
+      headers: { apikey: serviceKey, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_ip_hash: ipHash }),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!rateCheck.ok) {
+      console.error("[public-lead] rate-limit check failed", { status: rateCheck.status });
+      return json(res, 503, { error: "تعذر التحقق من حد الإرسال الآمن. حاول لاحقاً." });
+    }
+    const allowed = await rateCheck.json();
+    if (allowed !== true) {
+      res.setHeader("Retry-After", "20");
+      return json(res, 429, { error: "انتظر 20 ثانية قبل إرسال طلب آخر." });
+    }
+
     const response = await fetch(serviceUrl + "/rest/v1/leads", {
       method: "POST",
       headers: {
