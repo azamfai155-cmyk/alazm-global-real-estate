@@ -78,10 +78,10 @@ footer{background:#071812;color:#dce7e0;padding:25px 0;font-size:12px}.foot{disp
 <section class="team" id="team"><div class="wrap"><div class="head"><div class="kicker">التنظيم الداخلي</div><h2>فريق العمل الرقمي المقترح</h2><p>هذه أدوار افتراضية مخططة للمساعدة في تنظيم العمل مستقبلاً، وليست موظفين بشريين أو وكلاء ذكاء اصطناعي نشطين حالياً.</p></div><div class="roles">
 <div class="role"><b>01</b> المنسق التنفيذي</div><div class="role"><b>02</b> مدير العمليات</div><div class="role"><b>03</b> مساعد المالية</div><div class="role"><b>04</b> منسق المبيعات</div><div class="role"><b>05</b> منسق التأجير</div><div class="role"><b>06</b> مساعد التحقق من الإعلانات</div><div class="role"><b>07</b> خدمة العملاء</div><div class="role"><b>08</b> استراتيجي التسويق</div><div class="role"><b>09</b> مساعد صناعة المحتوى</div><div class="role"><b>10</b> محلل أبحاث السوق</div><div class="role"><b>11</b> مساعد الامتثال</div><div class="role"><b>12</b> المنسق الإقليمي</div>
 </div><p class="team-note">تظل الموافقة البشرية مطلوبة للقرارات المالية والقانونية ونشر العقارات والتحقق من المستندات والتعاقدات.</p></div></section>
-<section id="request"><div class="wrap"><div class="head"><div class="kicker">ابدأ الآن</div><h2>أرسل طلبك العقاري</h2><p>املأ البيانات التالية؛ سيفتح واتساب برسالة جاهزة لمراجعتها وإرسالها بنفسك.</p></div><div class="request-grid"><aside class="request-info"><h3>كيف نساعدك؟</h3><p>استقبل طلبك بشكل منظم حتى نعرف احتياجك ونحدد الخطوة التالية المناسبة.</p><ul><li>شراء أو بيع أو استئجار</li><li>تحديد الدولة والمدينة ونوع العقار</li><li>توضيح الميزانية والمتطلبات</li><li>طلب تعاون أو شراكة عقارية</li></ul><p>لا ترسل أرقام بطاقات أو كلمات مرور أو مستندات هوية حساسة عبر هذا النموذج.</p></aside>
+<section id="request"><div class="wrap"><div class="head"><div class="kicker">ابدأ الآن</div><h2>أرسل طلبك العقاري</h2><p>املأ بياناتك ووافق على سياسة التواصل لإرسال الطلب مباشرة إلى فريق الشركة.</p></div><div class="request-grid"><aside class="request-info"><h3>كيف نساعدك؟</h3><p>استقبل طلبك بشكل منظم حتى نعرف احتياجك ونحدد الخطوة التالية المناسبة.</p><ul><li>شراء أو بيع أو استئجار</li><li>تحديد الدولة والمدينة ونوع العقار</li><li>توضيح الميزانية والمتطلبات</li><li>طلب تعاون أو شراكة عقارية</li></ul><p>لا ترسل أرقام بطاقات أو كلمات مرور أو مستندات هوية حساسة عبر هذا النموذج.</p></aside>
 <form class="form" id="requestForm"><div class="fields">
 <div class="field"><label for="clientName">الاسم</label><input id="clientName" name="name" autocomplete="name" required maxlength="80" placeholder="اسمك"></div>
-<div class="field"><label for="clientPhone">رقم التواصل (اختياري)</label><input id="clientPhone" name="phone" autocomplete="tel" maxlength="30" placeholder="رقم الهاتف"></div>
+<div class="field"><label for="clientPhone">رقم التواصل</label><input id="clientPhone" name="phone" autocomplete="tel" inputmode="tel" required maxlength="30" placeholder="مع مفتاح الدولة"></div>
 <div class="field"><label for="purpose">نوع الطلب</label><select id="purpose" name="purpose" required><option value="">اختر نوع الطلب</option><option>شراء عقار</option><option>بيع عقار</option><option>استئجار عقار</option><option>تأجير عقار</option><option>شراكة أو تعاون</option><option>استفسار عام</option></select></div>
 <div class="field"><label for="country">الدولة</label><input id="country" name="country" required maxlength="70" placeholder="مثال: اليمن"></div>
 <div class="field"><label for="city">المدينة</label><input id="city" name="city" required maxlength="70" placeholder="المدينة أو المنطقة"></div>
@@ -89,21 +89,36 @@ footer{background:#071812;color:#dce7e0;padding:25px 0;font-size:12px}.foot{disp
 <div class="field"><label for="budget">الميزانية التقريبية</label><input id="budget" name="budget" maxlength="70" placeholder="اختياري مع العملة"></div>
 <div class="field"><label for="contactTime">وقت التواصل المناسب</label><select id="contactTime" name="time"><option>أي وقت مناسب</option><option>صباحاً</option><option>ظهراً</option><option>مساءً</option></select></div>
 <div class="field full"><label for="details">تفاصيل إضافية</label><textarea id="details" name="details" maxlength="700" placeholder="اكتب المواصفات أو أي معلومات تساعدنا على فهم طلبك"></textarea></div>
-</div><label class="consent"><input type="checkbox" id="consent" required><span>أوافق على إرسال البيانات التي أدخلتها إلى رقم واتساب الشركة لغرض متابعة هذا الطلب.</span></label><button class="btn gold" type="submit">متابعة عبر واتساب</button><p class="hint">لا تُرسل البيانات تلقائياً إلى خادم؛ ستتمكن من مراجعة الرسالة داخل واتساب قبل الضغط على إرسال.</p></form></div></div></section>
+</div><input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px" tabindex="-1">
+<label class="consent"><input type="checkbox" id="consent" required><span>أوافق على حفظ بيانات طلبي في قاعدة بيانات الشركة والتواصل معي بشأنه عبر رقم التواصل الذي أدخلته.</span></label>
+<button class="btn gold" type="submit">إرسال الطلب للشركة</button>
+<p class="hint">سيتم حفظ طلبك بشكل آمن ليتمكن فريق الشركة من مراجعته. لا ترسل كلمات مرور أو بيانات بطاقات أو مستندات هوية حساسة.</p>
+<p class="hint" id="requestStatus" role="status" aria-live="polite"></p></form></div></div></section>
 <section class="contact"><div class="wrap"><div class="head"><div class="kicker">تواصل معنا</div><h2>العزم العالمية للعقارات</h2><p>للاستفسارات العامة والتعاون والشراكات.</p></div><div class="contact-box"><div><h3>يسعدنا تواصلك</h3><p dir="ltr">WhatsApp: +967 711 273 188</p><p>يرجى ذكر الدولة والمدينة ونوع الخدمة المطلوبة.</p></div><a class="btn gold" href="https://wa.me/967711273188" target="_blank" rel="noopener noreferrer">فتح واتساب</a></div></div></section>
 </main>
-<footer><div class="wrap"><div class="foot"><strong>العزم العالمية للعقارات</strong><span>© <span id="year"></span> AL AZM GLOBAL REAL ESTATE</span></div><p class="notice">تنويه قانوني: هذه الصفحة التعريفية لا تمثل بحد ذاتها ترخيصاً لممارسة الوساطة أو التسويق العقاري. تخضع الخدمات والتعاملات للقوانين والتراخيص المعمول بها في كل دولة. لا توجد عقارات معروضة حالياً على هذا الموقع. يجب التحقق من بيانات العقار وصفة المعلن والمستندات قبل أي دفع أو توقيع. إرسال النموذج يفتح واتساب ولا يعني إبرام عقد أو قبول طلب.</p></div></footer>
+<footer><div class="wrap"><div class="foot"><strong>العزم العالمية للعقارات</strong><span>© <span id="year"></span> AL AZM GLOBAL REAL ESTATE</span></div><p class="notice">تنويه قانوني: هذه الصفحة التعريفية لا تمثل بحد ذاتها ترخيصاً لممارسة الوساطة أو التسويق العقاري. تخضع الخدمات والتعاملات للقوانين والتراخيص المعمول بها في كل دولة. لا توجد عقارات معروضة حالياً على هذا الموقع. يجب التحقق من بيانات العقار وصفة المعلن والمستندات قبل أي دفع أو توقيع. إرسال النموذج يحفظ طلب التواصل ولا يعني إبرام عقد أو قبول طلب.</p></div></footer>
 <script>
 (function(){
 const menu=document.getElementById('menuBtn'),nav=document.getElementById('navLinks');
 menu.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
 nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');menu.setAttribute('aria-expanded','false');}));
 document.getElementById('year').textContent=new Date().getFullYear();
-document.getElementById('requestForm').addEventListener('submit',function(e){
+const requestForm=document.getElementById('requestForm');
+requestForm.addEventListener('submit',async function(e){
 e.preventDefault();if(!this.reportValidity())return;
 const v=id=>document.getElementById(id).value.trim();
-const lines=['طلب عقاري جديد - العزم العالمية للعقارات','الاسم: '+v('clientName'),'رقم التواصل: '+(v('clientPhone')||'غير مذكور'),'نوع الطلب: '+v('purpose'),'الدولة: '+v('country'),'المدينة: '+v('city'),'نوع العقار: '+(v('propertyType')||'غير محدد'),'الميزانية: '+(v('budget')||'غير محددة'),'وقت التواصل: '+v('contactTime'),'التفاصيل: '+(v('details')||'لا توجد'),'موافقة العميل: نعم'];
-window.open('https://wa.me/967711273188?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener');
+const status=document.getElementById('requestStatus');
+const button=this.querySelector('button[type="submit"]');
+const payload={name:v('clientName'),phone:v('clientPhone'),purpose:v('purpose'),country:v('country'),city:v('city'),propertyType:v('propertyType'),budget:v('budget'),time:v('contactTime'),details:v('details'),consent:document.getElementById('consent').checked,website:this.elements.website.value};
+button.disabled=true;status.textContent='جارٍ حفظ طلبك...';
+try{
+const response=await fetch('/api/public-lead',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+const result=await response.json().catch(()=>({}));
+if(!response.ok||!result.ok)throw new Error(result.error||'تعذر حفظ الطلب حالياً.');
+status.textContent='تم استلام طلبك بنجاح. رقم المتابعة: '+result.reference;
+this.reset();
+}catch(error){status.textContent=error.message||'حدث خطأ. حاول مرة أخرى.';}
+finally{button.disabled=false;}
 });
 })();
 </script>
