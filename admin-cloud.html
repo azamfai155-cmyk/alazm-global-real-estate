@@ -139,14 +139,16 @@ async function loadAITasks(){
  try{
   const d=await aiRequest("/api/ai-tasks");
   $("aiEmployees").textContent="الموظفون: "+d.employees.map(e=>e.name+" ("+(e.enabled?"مفعّل":"متوقف")+")").join(" · ");
+  const canReviewTasks=d.role==="owner";
   $("aiEmployee").innerHTML=d.employees.filter(e=>e.enabled).map(e=>'<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>').join("");
   $("aiTaskRows").innerHTML=d.tasks.map(t=>{
    const result=t.result?.report||t.error_message||"—";
    let actions="";
    if(t.status==="queued") actions+='<button class="btn gold" data-ai-run="'+esc(t.id)+'">تشغيل</button> ';
-   if(t.status==="needs_review") actions+='<button class="btn gold" data-ai-approve="'+esc(t.id)+'">اعتماد النتيجة</button> ';
-   if(["queued","needs_review","failed"].includes(t.status)) actions+='<button class="btn light" data-ai-cancel="'+esc(t.id)+'">إلغاء</button> ';
-   if(t.status==="failed") actions+='<button class="btn light" data-ai-retry="'+esc(t.id)+'">إعادة للانتظار</button>';
+   if(canReviewTasks&&t.status==="needs_review") actions+='<button class="btn gold" data-ai-approve="'+esc(t.id)+'">اعتماد النتيجة</button> ';
+   if(canReviewTasks&&["queued","needs_review","failed"].includes(t.status)) actions+='<button class="btn light" data-ai-cancel="'+esc(t.id)+'">إلغاء</button> ';
+   if(canReviewTasks&&t.status==="failed") actions+='<button class="btn light" data-ai-retry="'+esc(t.id)+'">إعادة للانتظار</button> ';
+   if(!canReviewTasks&&["needs_review","failed"].includes(t.status)) actions+='بانتظار إجراء مالك الشركة';
    return '<tr><td>'+esc(t.title)+'</td><td>'+esc(t.employee_id)+'</td><td>'+esc(taskStatus[t.status]||t.status)+'</td><td><details><summary>عرض</summary><pre style="white-space:pre-wrap;max-width:420px">'+esc(result)+'</pre></details></td><td>'+actions+'</td></tr>';
   }).join("");
  }catch(e){$("aiEmployees").textContent="تعذر تحميل المهام: "+e.message}
