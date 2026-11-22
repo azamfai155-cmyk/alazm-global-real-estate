@@ -22,17 +22,37 @@ module.exports=async function handler(req,res){
     if(req.method==="PATCH"&&profile.role!=="owner") return json(res,403,{error:"اعتماد التقارير وتغيير حالات المهام متاح لمالك الشركة فقط."});
 
     if(req.method==="GET"){
-      const [tr,er]=await Promise.all([
+      const [tr,er,wr]=await Promise.all([
         fetch(url+"/rest/v1/ai_employee_tasks?select=id,employee_id,title,instructions,input_data,status,priority,result,error_message,created_at,started_at,completed_at,reviewed_at&order=created_at.desc&limit=50",{headers:serverHeaders}),
-        fetch(url+"/rest/v1/ai_employees?select=id,name,department,purpose,enabled,requires_human_approval&order=department.asc",{headers:serverHeaders})
+        fetch(url+"/rest/v1/ai_employees?select=id,name,department,purpose,enabled,requires_human_approval&order=department.asc",{headers:serverHeaders}),
+        fetch(url+"/rest/v1/ai_workflow_runs?select=id,template_id,title,status,current_step,created_at,completed_at,ai_workflow_steps(id,step_order,employee_id,title,status,task_id,completed_at)&order=created_at.desc&limit=30",{headers:serverHeaders})
       ]);
-      const [tasks,employees]=await Promise.all([tr.json(),er.json()]);
-      if(!tr.ok||!er.ok) return json(res,502,{error:"تعذر قراءة قائمة مهام الذكاء الاصطناعي."});
-      return json(res,200,{tasks,employees,role:profile.role});
+      const [tasks,employees,workflows]=await Promise.all([tr.json(),er.json(),wr.json()]);
+      if(!tr.ok||!er.ok||!wr.ok) return json(res,502,{error:"تعذر قراءة قائمة المهام أو مسارات العمل."});
+      return json(res,200,{tasks,employees,workflows,role:profile.role});
     }
 
     if(req.method==="POST"){
       const body=req.body||{};
+      if(body.workflow_template_id!==undefined){
+        if(profile.role!=="owner") return json(res,403,{error:"إنشاء مسار عقاري متتابع متاح لمالك الشركة فقط."});
+        const workflowTitle=String(body.title||"").trim();
+        if(!workflowTitle||workflowTitle.length>160) return json(res,400,{error:"أدخل عنواناً لمسار العقار ضمن 160 حرفاً."});
+        const sourcePayload=body.source_payload===undefined?{}:body.source_payload;
+        if(!sourcePayload||typeof sourcePayload!=="object"||Array.isArray(sourcePayload)) return json(res,400,{error:"بيانات العرض يجب أن تكون كائناً صالحاً."});
+        let payloadText;
+        try{payloadText=JSON.stringify(sourcePayload);}catch(_){return json(res,400,{error:"تعذر قراءة بيانات العرض."});}
+        if(payloadText.length>8000) return json(res,413,{error:"بيانات العرض كبيرة جداً؛ الحد 8000 حرف."});
+        const templateId=String(body.workflow_template_id||"");
+        if(templateId!=="property_intake_v1") return json(res,400,{error:"قالب مسار العمل غير معروف."});
+        const wr=await fetch(url+"/rest/v1/rpc/start_ai_property_workflow",{
+          method:"POST",headers:serverHeaders,
+          body:JSON.stringify({p_actor_id:user.id,p_title:workflowTitle,p_source_payload:sourcePayload,p_template_id:templateId})
+        });
+        const workflow=await wr.json();
+        if(!wr.ok) return json(res,502,{error:"تعذر إنشاء مسار العقار. لم يتم تشغيل أي موظف."});
+        return json(res,201,{workflow});
+      }
       const title=String(body.title||"").trim();
       const instructions=String(body.instructions||"").trim();
       if(!title||title.length>160||!instructions||instructions.length>4000) return json(res,400,{error:"أدخل عنواناً وتعليمات، ضمن الحدود المسموحة."});
