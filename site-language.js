@@ -5,7 +5,7 @@ const RTL=new Set(["ar","fa","he","ur","ps","sd","ug","yi","dv"]);
 const API="https://latgmqklsszgictpuerp.supabase.co/functions/v1/site-translate";
 const names=(()=>{try{return new Intl.DisplayNames([navigator.language||"en"],{type:"language"})}catch(e){return null}})();
 const path=location.pathname,segments=path.split("/").filter(Boolean),pathLocale=segments.length&&LANGS.includes(segments[0])?segments[0]:null;
-const page=path.endsWith("properties.html")?"properties.html":path.endsWith("privacy.html")?"privacy.html":"index.html";
+const page=path.endsWith("properties.html")?"properties.html":path.endsWith("privacy.html")?"privacy.html":path.endsWith("verification.html")?"verification.html":"index.html";
 const pagePath=page==="index.html"?"":page,query=new URLSearchParams(location.search);
 let lang=(query.get("lang")||pathLocale||document.documentElement.lang||"en").toLowerCase();
 if(!LANGS.includes(lang))lang="en";
