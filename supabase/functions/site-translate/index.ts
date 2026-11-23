@@ -6,6 +6,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 const ALLOWED_ORIGINS = new Set(["https://alazm-global-real-estate.vercel.app"]);
+const ALLOWED_TARGET_LANGUAGES = new Set(["ar","en","fr","es","de","tr","ru","zh-cn","ja","ko","hi","ur","fa","pt","it","nl","id","ms","bn","sw"]);
 const headers = {
   "Access-Control-Allow-Origin": "https://alazm-global-real-estate.vercel.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
   const trailingWhitespace = rawSource.slice(rawSource.trimEnd().length);
   const target = typeof body.target === "string" ? body.target.toLowerCase() : "";
   const sourceLang = body.source === undefined ? "en" : (body.source === "ar" || body.source === "en" ? body.source : "");
-  if (!source || new TextEncoder().encode(rawSource).length > 450 || !sourceLang || !/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(target) || target === sourceLang) {
+  if (!source || new TextEncoder().encode(rawSource).length > 450 || !sourceLang || !ALLOWED_TARGET_LANGUAGES.has(target) || target === sourceLang) {
     return reply({ error: "invalid_input" }, 400);
   }
 
