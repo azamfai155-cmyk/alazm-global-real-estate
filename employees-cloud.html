@@ -20,6 +20,7 @@ async function start(){const {data:{session},error}=await sb.auth.getSession();i
 const {data:p,error:pe}=await sb.from("profiles").select("full_name,role,active").eq("id",session.user.id).single();
 if(pe||!p?.active||!["owner","admin"].includes(p.role)){await sb.auth.signOut();location.replace("login.html?reason=unauthorized");return}
 currentProfileRole=p.role;
+if($("newWorkflow"))$("newWorkflow").hidden=currentProfileRole!=="owner";
 $("msg").textContent="تم التحقق من حساب الإدارة. جارٍ تحميل البيانات...";
 $("newTask").onclick=()=>{$("modal").classList.add("open")};$("close").onclick=()=>$("modal").classList.remove("open");$("newWorkflow").onclick=()=>{$("workflowModal").classList.add("open")};$("closeWorkflow").onclick=()=>$("workflowModal").classList.remove("open");$("refresh").onclick=load;
 await load()}
@@ -36,7 +37,7 @@ function renderStaff(){const q=$("search").value.toLowerCase();$("staff").innerH
 function filterStaff(){renderStaff()}
 function renderWorkflows(){
  if(workflowLoadError){$("workflows").innerHTML='<p class="muted" style="color:#923b32">' + esc(workflowLoadError) + ' اضغط تحديث البيانات للمحاولة مجدداً.</p>';return;}
- const labels={queued:"في الانتظار",running:"قيد التنفيذ",needs_review:"بانتظار مراجعة المالك",completed:"مكتملة",cancelled:"ملغاة",failed:"فشلت",blocked:"متوقفة حتى اعتماد المرحلة السابقة"};
+ const labels={active:"مسار نشط",queued:"في الانتظار",running:"قيد التنفيذ",needs_review:"بانتظار مراجعة المالك",completed:"مكتملة",cancelled:"ملغاة",failed:"فشلت",blocked:"متوقفة حتى اعتماد المرحلة السابقة"};
  const list=Array.isArray(workflows)?workflows:[];
  $("workflows").innerHTML=list.length?list.map(w=>{
   const steps=Array.isArray(w.ai_workflow_steps)?w.ai_workflow_steps:[];
