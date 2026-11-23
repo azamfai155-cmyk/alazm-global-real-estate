@@ -25,6 +25,19 @@ module.exports = async function handler(req, res) {
   // Do not place the secret key in Authorization, which causes Invalid JWT.
   const supabaseServiceHeaders = {apikey:SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json"};
   let claimedTaskId = null;
+  let runRecordId = null;
+  const runStartedAt = Date.now();
+  const updateRunRecord = async (status, summary) => {
+    if (!runRecordId) return false;
+    try {
+      const response = await fetch(base+"/rest/v1/ai_employee_runs?id=eq."+encodeURIComponent(runRecordId), {
+        method:"PATCH", headers:{...supabaseServiceHeaders,Prefer:"return=representation"},
+        body:JSON.stringify({status,safe_summary:String(summary||"").slice(0,500),duration_ms:Math.max(0,Date.now()-runStartedAt)})
+      });
+      const rows = response.ok ? await response.json() : null;
+      return response.ok && Array.isArray(rows) && rows.length === 1;
+    } catch (_) { return false; }
+  };
   let stage = "بدء التنفيذ";
 
   try {
@@ -66,6 +79,23 @@ module.exports = async function handler(req, res) {
     const claimed = await claim.json();
     if (!claim.ok || !Array.isArray(claimed) || claimed.length !== 1) return json(res,409,{error:"المهمة استُلمت من تشغيل آخر أو تغيرت حالتها."});
     claimedTaskId = taskId;
+
+    // Persist a running record immediately after the atomic claim, before any provider call.
+    stage = "تسجيل بداية التشغيل";
+    const runCreate = await fetch(base+"/rest/v1/ai_employee_runs", {
+      method:"POST", headers:{...supabaseServiceHeaders,Prefer:"return=representation"},
+      body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"running",safe_summary:"بدأ التنفيذ بعد التحقق من جلسة المالك وصلاحية المهمة."})
+    });
+    const runRows = runCreate.ok ? await runCreate.json() : null;
+    if (!runCreate.ok || !Array.isArray(runRows) || runRows.length !== 1) {
+      await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(taskId)+"&status=eq.running", {
+        method:"PATCH", headers:supabaseServiceHeaders,
+        body:JSON.stringify({status:"failed",error_message:"تعذر إنشاء سجل تشغيل المهمة؛ أوقف النظام التنفيذ قبل الاتصال بمزود الذكاء الاصطناعي.",completed_at:new Date().toISOString()})
+      });
+      claimedTaskId = null;
+      return json(res,502,{error:"تعذر تسجيل بداية التشغيل. لم يتم الاتصال بـ Gemini ولم يتم استهلاك الحصة."});
+    }
+    runRecordId = runRows[0].id;
 
     const prompt = [
       "أنت "+String(employee.name||"موظف ذكاء اصطناعي")+" في شركة AL AZM GLOBAL REAL ESTATE.",
@@ -114,14 +144,8 @@ module.exports = async function handler(req, res) {
       const failedRows = failedUpdate.ok ? await failedUpdate.json() : null;
       if (!failedUpdate.ok || !Array.isArray(failedRows) || failedRows.length !== 1)
         throw new Error("تعذر تثبيت حالة فشل المهمة بعد رفض Gemini (HTTP "+failedUpdate.status+").");
-      try {
-        await fetch(base+"/rest/v1/ai_employee_runs",{
-          method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
-          body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:message+" HTTP "+ai.status})
-        });
-      } catch (logError) {
-        console.error("[ai-run-task] failure recorded but run log insert failed",{name:logError?.name||"Error",taskId});
-      }
+      const runUpdated = await updateRunRecord("failed",message+" HTTP "+ai.status);
+      if (!runUpdated) console.error("[ai-run-task] task failure saved but run record update failed",{taskId});
       claimedTaskId = null;
       return json(res,ai.status===429 || ai.status===402 ? ai.status : 502,{error:message});
     }
@@ -140,14 +164,8 @@ module.exports = async function handler(req, res) {
       const failedRows = failedUpdate.ok ? await failedUpdate.json() : null;
       if (!failedUpdate.ok || !Array.isArray(failedRows) || failedRows.length !== 1)
         throw new Error("تعذر تثبيت حالة التقرير غير المكتمل (HTTP "+failedUpdate.status+").");
-      try {
-        await fetch(base+"/rest/v1/ai_employee_runs",{
-          method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
-          body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"failed",safe_summary:diagnostic})
-        });
-      } catch (logError) {
-        console.error("[ai-run-task] incomplete report recorded but run log insert failed",{name:logError?.name||"Error",taskId});
-      }
+      const runUpdated = await updateRunRecord("failed",diagnostic);
+      if (!runUpdated) console.error("[ai-run-task] incomplete report saved but run record update failed",{taskId});
       claimedTaskId = null;
       return json(res,502,{error:diagnostic});
     }
@@ -163,17 +181,8 @@ module.exports = async function handler(req, res) {
     // The report is now safely stored for human review. Run telemetry is best-effort:
     // a logging outage must not turn a successful report into a misleading failed response.
     claimedTaskId = null;
-    let runLogSaved = false;
-    try {
-      const runSave = await fetch(base+"/rest/v1/ai_employee_runs",{
-        method:"POST",headers:{...supabaseServiceHeaders,Prefer:"return=minimal"},
-        body:JSON.stringify({task_id:taskId,employee_id:task.employee_id,provider:"Google Gemini",model:MODEL,status:"succeeded",safe_summary:output.slice(0,500)})
-      });
-      runLogSaved = runSave.ok;
-      if (!runLogSaved) console.error("[ai-run-task] report saved but run log insert failed",{httpStatus:runSave.status,taskId});
-    } catch (logError) {
-      console.error("[ai-run-task] report saved but run log request failed",{name:logError?.name||"Error",taskId});
-    }
+    const runLogSaved = await updateRunRecord("succeeded",output.slice(0,500));
+    if (!runLogSaved) console.error("[ai-run-task] report saved but run record update failed",{taskId});
     return json(res,200,{status:"needs_review",report:output,provider:"Google Gemini",model:MODEL,run_log_saved:runLogSaved});
   } catch (e) {
     console.error("[ai-run-task] failure", {stage, name:e?.name||"Error", message:String(e?.message||e).slice(0,300), taskId:claimedTaskId});
@@ -181,9 +190,10 @@ module.exports = async function handler(req, res) {
       try {
         await fetch(base+"/rest/v1/ai_employee_tasks?id=eq."+encodeURIComponent(claimedTaskId)+"&status=eq.running",{
           method:"PATCH",headers:supabaseServiceHeaders,
-          body:JSON.stringify({status:"failed",error_message:"توقف التنفيذ بسبب خطأ داخلي أو تعذر حفظ سجل التشغيل. افحص السجل قبل إعادة المحاولة.",completed_at:new Date().toISOString()})
+          body:JSON.stringify({status:"failed",error_message:"توقف التنفيذ بسبب خطأ داخلي في المرحلة: "+stage+". راجع سجل التشغيل قبل أي إعادة محاولة.",completed_at:new Date().toISOString()})
         });
       } catch (_) {}
+      await updateRunRecord("failed","توقف التنفيذ في المرحلة: "+stage+". راجع تفاصيل سجل الخادم.");
     }
     return json(res,500,{error:"حدث خطأ أثناء مرحلة: "+stage+". لم تُعد المحاولة تلقائياً؛ حدّث البيانات وافحص حالة المهمة والسجل."});
   }
