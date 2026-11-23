@@ -35,7 +35,7 @@ const enabledCount=staff.filter(x=>x.enabled).length;const successfulRuns=(r.dat
 function renderStaff(){const q=$("search").value.toLowerCase();$("staff").innerHTML=staff.filter(x=>(x.name+" "+x.department+" "+x.purpose).toLowerCase().includes(q)).map(x=>'<article class="card"><div class="avatar">'+(x.id==="ceo"?"👔":x.id==="sourcing"?"🔎":x.id==="rights"?"⚖️":x.id==="quality"?"🧾":x.id==="marketing"?"📣":x.id==="publishing"?"🚀":x.id==="buyers"?"🤝":x.id==="sellers"?"🏠":x.id==="sales"?"🎯":x.id==="analyst"?"📊":x.id==="localization"?"🌍":"🛡️")+'</div><h3>'+esc(x.name)+'</h3><div class="muted">'+esc(x.department)+'</div><p>'+esc(x.purpose)+'</p><span class="pill">'+(x.enabled?"مفعّل في قاعدة البيانات":"غير مفعّل")+'</span> <span class="pill">موافقة بشرية مطلوبة</span></article>').join("")}
 function filterStaff(){renderStaff()}
 function renderWorkflows(){
- const labels={queued:"في الانتظار",running:"قيد التنفيذ",needs_review:"بانتظار مراجعة المالك",completed:"مكتملة",cancelled:"ملغاة",failed:"فشلت"};
+ const labels={queued:"في الانتظار",running:"قيد التنفيذ",needs_review:"بانتظار مراجعة المالك",completed:"مكتملة",cancelled:"ملغاة",failed:"فشلت",blocked:"متوقفة حتى اعتماد المرحلة السابقة"};
  const list=Array.isArray(workflows)?workflows:[];
  $("workflows").innerHTML=list.length?list.map(w=>{
   const steps=Array.isArray(w.ai_workflow_steps)?w.ai_workflow_steps:[];
