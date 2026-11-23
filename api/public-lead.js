@@ -78,7 +78,9 @@ module.exports = async function handler(req, res) {
   if (!serviceKey) return json(res, 503, { error: "خدمة استقبال الطلبات غير مهيأة حالياً. حاول لاحقاً." });
 
   try {
-    const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim().slice(0, 80);
+    const forwardedFor = String(req.headers["x-forwarded-for"] || "").split(",").map(value => value.trim()).filter(Boolean);
+    // Prefer the proxy-provided client IP; otherwise use the right-most forwarded hop.
+    const ip = String(req.headers["x-real-ip"] || forwardedFor.at(-1) || req.socket?.remoteAddress || "unknown").slice(0, 80);
     const rateSalt = process.env.LEAD_RATE_LIMIT_SALT || serviceKey;
     const ipHash = crypto.createHash("sha256").update(rateSalt).update(":").update(ip).digest("hex");
     const rateCheck = await fetch(serviceUrl + "/rest/v1/rpc/allow_public_lead_submission", {
