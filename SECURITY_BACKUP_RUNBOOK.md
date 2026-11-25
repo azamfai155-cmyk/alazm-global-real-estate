@@ -12,7 +12,7 @@
 - Staff invitations are sent only after the owner confirms the email address and intended role.
 - Start all new staff with the least-privileged `support` role. Promote only after identity and duties are checked.
 - The staff admin API is `/api/staff-admin`; its UI is `/staff-admin.html`. It is owner-only. The invite endpoint sends email and therefore must be tested with a controlled address before operational use.
-- The staff workflow currently has no durable audit-log table. Until one is implemented and tested, record each invitation, role change, and deactivation in the company's restricted operations register.
+- Staff invitation and account changes are written by the owner-only API to the existing `public.audit_logs` table using the server-side service role. Verify `audit_logged: true` in API responses and periodically review the restricted audit log. The API handler has passed mocked tests; live authenticated end-to-end testing remains NOT TESTED.
 
 ## 2. Database baseline
 
@@ -96,5 +96,5 @@ Record these as separate statuses; do not infer one from another:
 - Database restore drill: PASS / FAIL / NOT TESTED.
 - Storage restore drill: PASS / FAIL / NOT TESTED.
 - Owner MFA reviewed: date.
-- Staff invite/deactivate tests: PASS / FAIL / NOT TESTED.
+- Staff invite/deactivate tests: mocked handler tests PASS; live Auth/email/session lifecycle NOT TESTED.
 - RLS/role matrix tests: PASS / FAIL / NOT TESTED.
