@@ -82,7 +82,7 @@ Mandatory access rules:
 - Never expose the Supabase service-role key in browser code.
 - Staff accounts must use individual identities; no shared passwords.
 
-**Implementation status:** Existing owner/admin route checks and database role-change guard are present. A complete human staff invitation/deactivation workflow is not yet implemented or tested. Do not claim this feature is live until its server endpoint, UI, audit trail, and end-to-end tests are merged and verified.
+**Implementation status:** An owner-only staff administration API (`/api/staff-admin`) and page (`/staff-admin.html`) have been added on the development branch. They support listing accounts, sending an email invitation, assigning an allowed non-owner role, and deactivating/reactivating accounts. The invitation starts at the default support role. This code has not been deployed or end-to-end tested; email delivery depends on Supabase Auth email configuration. A durable audit-log table is still required before the workflow is considered production-complete.
 
 ## 6. Listing publication policy
 
@@ -120,14 +120,14 @@ Missing, expired, conflicting, suspicious, duplicated, or unlicensed listings ar
 - Keep production changes behind reviewed commits; no direct unreviewed database edits.
 - Maintain a written incident response and access-revocation procedure.
 - **Supabase Free does not provide downloadable managed database backups.** The documented no-upgrade path is regular logical exports using Supabase CLI `db dump` and off-site storage. Storage objects require a separate export because database dumps do not contain the actual files.
-- Backup acceptance requires: dated encrypted export, separate off-site copy, checksum, documented restore steps, and a successful restore drill to a separate safe environment. Never claim a backup is working until a restore drill passes.
+- A detailed free-plan export, Storage-object backup, and restore-drill procedure is documented in `SECURITY_BACKUP_RUNBOOK.md`. Backup acceptance requires: dated encrypted export, separate off-site copy, checksum, documented restore steps, and a successful restore drill to a separate safe environment. Never claim a backup is working until a restore drill passes.
 - Automated managed backups / PITR are not enabled because they require a paid plan or add-on. No paid upgrade is authorised.
 
 ## 9. Launch gates
 
 The company is not declared fully operational until all are evidenced:
 - Owner login tested; recovery path and MFA reviewed.
-- Human staff lifecycle (invite, role assignment, deactivation, session revocation) tested.
+- Human staff lifecycle (invite, role assignment, deactivation, session revocation) tested, with durable audit logging.
 - RLS and API authorization tests pass for each role.
 - Listing/source/media workflow tested with permissioned test material.
 - Public lead POST tested with synthetic data and removed after verification.
