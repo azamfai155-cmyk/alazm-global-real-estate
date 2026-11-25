@@ -82,7 +82,7 @@ Mandatory access rules:
 - Never expose the Supabase service-role key in browser code.
 - Staff accounts must use individual identities; no shared passwords.
 
-**Implementation status:** An owner-only staff administration API (`/api/staff-admin`) and page (`/staff-admin.html`) have been added on the development branch. They support listing accounts, sending an email invitation, assigning an allowed non-owner role, and deactivating/reactivating accounts. The invitation starts at the default support role. This code has not been deployed or end-to-end tested; email delivery depends on Supabase Auth email configuration. A durable audit-log table is still required before the workflow is considered production-complete.
+**Implementation status:** An owner-only staff administration API (`/api/staff-admin`) and page (`/staff-admin.html`) are implemented on the development branch. The API lists Auth users, sends invitations with a fixed trusted redirect, assigns only allowed non-owner roles, deactivates/reactivates accounts, and writes staff changes to the existing `public.audit_logs` table using the server-side service role. The branch code passed syntax validation and mocked handler tests for missing auth, non-owner/inactive-owner denial, owner listing, invitation, role update, deactivate/reactivate, invalid role rejection, and audit insertion. The Vercel preview is READY and the staff page returns HTTP 200. Live authenticated API integration, real email delivery, and a real staff lifecycle test remain NOT TESTED; invitation delivery depends on Supabase Auth email configuration. The production deployment has not been changed.
 
 ## 6. Listing publication policy
 
