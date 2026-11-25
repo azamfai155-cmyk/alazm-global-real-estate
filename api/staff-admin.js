@@ -40,8 +40,7 @@ module.exports=async function handler(req,res){
    const email=String(body.email||"").trim().toLowerCase();
    if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json(res,400,{error:"أدخل بريداً إلكترونياً صالحاً."});
    const inviteUrl=String(process.env.STAFF_INVITE_REDIRECT_URL||"https://alazm-global-real-estate.vercel.app/login.html");
-   let parsed;try{parsed=new URL(inviteUrl)}catch(_){return json(res,503,{error:"رابط الدعوة غير صالح."});}
-   if(parsed.protocol!=="https:"||parsed.host!=="alazm-global-real-estate.vercel.app"||parsed.username||parsed.password)return json(res,503,{error:"رابط الدعوة يجب أن يكون نطاق الإنتاج المعتمد عبر HTTPS."});
+   if(inviteUrl!=="https://alazm-global-real-estate.vercel.app/login.html")return json(res,503,{error:"رابط الدعوة يجب أن يطابق صفحة دخول الشركة المعتمدة عبر HTTPS."});
    const invite=await fetch(base+"/auth/v1/invite?redirect_to="+encodeURIComponent(inviteUrl),{method:"POST",headers:adminHeaders,body:JSON.stringify({email,data:{invited_by:actor.id}}),signal:timeout(12000)});
    const invited=await invite.json();
    if(!invite.ok)return json(res,invite.status===429?429:invite.status===422?409:502,{error:"تعذر إرسال الدعوة. تحقق من إعدادات البريد أو حالة الحساب.",details:invited.msg||invited.message||null});
