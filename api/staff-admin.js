@@ -6,7 +6,7 @@ module.exports=async function handler(req,res){
  const auth=String(req.headers.authorization||"");
  if(!auth.startsWith("Bearer "))return json(res,401,{error:"تسجيل الدخول مطلوب."});
  const base=String(process.env.SUPABASE_URL||"").replace(/\/$/,"");
- const anon=process.env.SUPABASE_ANON_KEY||process.env.SUPABASE_PUBLISHABLE_KEY;
+ const anon=process.env.SUPABASE_ANON_KEY||process.env.SUPABASE_PUBLISHABLE_KEY||"sb_publishable_wMBzGxUySW5xznKG_Gx_Rg_DFNqDwhP";
  const service=process.env.SUPABASE_SERVICE_ROLE_KEY;
  if(!base||!anon||!service)return json(res,503,{error:"إعدادات الخادم غير مكتملة."});
  const adminHeaders={apikey:service,Authorization:"Bearer "+service,"Content-Type":"application/json"};
@@ -33,8 +33,7 @@ module.exports=async function handler(req,res){
   if(req.method==="POST"){
    const email=String(body.email||"").trim().toLowerCase();
    if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return json(res,400,{error:"أدخل بريداً إلكترونياً صالحاً."});
-   const inviteUrl=String(process.env.STAFF_INVITE_REDIRECT_URL||"");
-   if(!inviteUrl)return json(res,503,{error:"يجب ضبط رابط العودة الآمن لدعوات الموظفين في إعدادات الخادم."});
+   const inviteUrl=String(process.env.STAFF_INVITE_REDIRECT_URL||"https://alazm-global-real-estate.vercel.app/login.html");
    let parsed;try{parsed=new URL(inviteUrl)}catch(_){return json(res,503,{error:"رابط الدعوة غير صالح."});}
    if(parsed.protocol!=="https:"||parsed.host!=="alazm-global-real-estate.vercel.app")return json(res,503,{error:"رابط الدعوة يجب أن يكون نطاق الإنتاج المعتمد عبر HTTPS."});
    const invite=await fetch(base+"/auth/v1/invite?redirect_to="+encodeURIComponent(inviteUrl),{method:"POST",headers:adminHeaders,body:JSON.stringify({email,data:{invited_by:actor.id}}),signal:AbortSignal.timeout(12000)});
